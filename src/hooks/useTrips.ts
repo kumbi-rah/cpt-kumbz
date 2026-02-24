@@ -115,7 +115,10 @@ export function useUpdateTrip() {
       const { error } = await supabase.from("trips").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["trips"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trips"] });
+      qc.invalidateQueries({ queryKey: ["trip"] });
+    },
   });
 }
 
@@ -126,7 +129,30 @@ export function useToggleSectionPublic() {
       const { error } = await supabase.from("trip_sections").update({ is_public }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["trip_sections"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_sections"] }),
+  });
+}
+
+export function useCreateSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (section: TablesInsert<"trip_sections">) => {
+      const { data, error } = await supabase.from("trip_sections").insert(section).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_sections"] }),
+  });
+}
+
+export function useUpdateSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<TripSection>) => {
+      const { error } = await supabase.from("trip_sections").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_sections"] }),
   });
 }
 
@@ -137,6 +163,17 @@ export function useCreateArrival() {
       const { data, error } = await supabase.from("arrivals").insert(arrival).select().single();
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["arrivals"] }),
+  });
+}
+
+export function useUpdateArrival() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Arrival>) => {
+      const { error } = await supabase.from("arrivals").update(updates).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["arrivals"] }),
   });
@@ -168,8 +205,18 @@ export function useUploadPhoto() {
         uploaded_by: userId,
       });
       if (dbErr) throw dbErr;
+
+      // Auto-set as cover photo if trip doesn't have one
+      const { data: trip } = await supabase.from("trips").select("cover_photo_url").eq("id", tripId).single();
+      if (trip && !trip.cover_photo_url) {
+        await supabase.from("trips").update({ cover_photo_url: urlData.publicUrl }).eq("id", tripId);
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_photos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trip_photos"] });
+      qc.invalidateQueries({ queryKey: ["trips"] });
+      qc.invalidateQueries({ queryKey: ["trip"] });
+    },
   });
 }
 

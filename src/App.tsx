@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import SideNav from "@/components/SideNav";
 import CreateTripDialog from "@/components/CreateTripDialog";
 import Index from "./pages/Index";
 import TripDetail from "./pages/TripDetail";
@@ -34,47 +35,50 @@ function AppLayout() {
   const { user } = useAuth();
 
   return (
-    <>
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/share/:shareToken" element={<PublicSharePage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Index />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/trip/:id"
-          element={
-            <ProtectedRoute>
-              <TripDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/globe"
-          element={
-            <ProtectedRoute>
-              <GlobePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <ProtectedRoute>
-              <Index />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+    <div className="flex min-h-screen w-full">
+      {user && <SideNav onCreateClick={() => setCreateOpen(true)} />}
+      <main className={`flex-1 ${user ? "md:ml-56" : ""}`}>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/share/:shareToken" element={<PublicSharePage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trip/:id"
+            element={
+              <ProtectedRoute>
+                <TripDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/globe"
+            element={
+              <ProtectedRoute>
+                <GlobePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
       {user && <BottomNav onCreateClick={() => setCreateOpen(true)} />}
       <CreateTripDialog open={createOpen} onOpenChange={setCreateOpen} />
-    </>
+    </div>
   );
 }
 
