@@ -48,7 +48,7 @@ function AppLayout() {
             path="/"
             element={
               <ProtectedRoute>
-                <Index />
+                <Index onCreateClick={() => setCreateOpen(true)} />
               </ProtectedRoute>
             }
           />
@@ -80,7 +80,7 @@ function AppLayout() {
             path="/create"
             element={
               <ProtectedRoute>
-                <Index />
+                <Index onCreateClick={() => setCreateOpen(true)} />
               </ProtectedRoute>
             }
           />
