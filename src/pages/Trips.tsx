@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Anchor } from "@phosphor-icons/react";
 import PolaroidCard from "@/components/PolaroidCard";
+import CompassRose from "@/components/icons/CompassRose";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrips } from "@/hooks/useTrips";
 import { getTripStatus } from "@/lib/tripStatus";
@@ -28,7 +29,7 @@ export default function Trips({ onCreateClick }: Props) {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="px-5 pt-8 pb-4">
-          <h1 className="font-georgia italic text-3xl md:text-4xl text-ink leading-tight">Your Voyages</h1>
+          <h1 className="font-georgia italic text-3xl md:text-4xl text-foreground leading-tight">Your Voyages</h1>
           <p className="font-georgia italic text-sm md:text-base text-muted-foreground mt-0.5">Every adventure, logged</p>
         </header>
 
@@ -38,7 +39,7 @@ export default function Trips({ onCreateClick }: Props) {
             <button
               onClick={() => setTab("upcoming")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === "upcoming" ? "bg-amber text-white" : "text-muted-foreground hover:text-ink"
+                tab === "upcoming" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Upcoming ({upcoming.length})
@@ -46,7 +47,7 @@ export default function Trips({ onCreateClick }: Props) {
             <button
               onClick={() => setTab("past")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === "past" ? "bg-teal text-white" : "text-muted-foreground hover:text-ink"
+                tab === "past" ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Past ({past.length})
@@ -57,38 +58,51 @@ export default function Trips({ onCreateClick }: Props) {
         {/* Cards */}
         <div className="px-5">
           {isLoading ? (
-            <div className="flex gap-6 py-4 px-2 -mx-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex-shrink-0 w-64 md:w-auto">
-                  <Skeleton className="h-72 w-full rounded-xl" />
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-10 gap-y-[50px]">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex justify-center">
+                  <Skeleton className="h-[260px] w-[160px] rounded-sm" />
                 </div>
               ))}
             </div>
           ) : displayed.length === 0 ? (
-            <div className="py-16 flex flex-col items-center text-center parchment-bg rounded-xl border border-amber/20 px-8 relative overflow-hidden">
-              <div className="grain-overlay rounded-xl" />
-              <Anchor size={56} weight="duotone" className="text-amber mb-4 opacity-40 relative z-10" />
-              <p className="font-georgia italic text-xl text-ink mb-1 relative z-10">
-                {tab === "upcoming" ? "No voyages ahead yet, Captain" : "No adventures in the log yet"}
-              </p>
-              {tab === "upcoming" ? (
+            /* Empty states */
+            tab === "upcoming" ? (
+              <div className="py-16 flex flex-col items-center text-center px-8">
+                <div className="mb-4 opacity-20">
+                  <CompassRose size={80} className="text-muted-foreground" />
+                </div>
+                <p className="font-georgia text-xl text-foreground mb-1">
+                  No voyages ahead yet, Captain
+                </p>
                 <button
                   onClick={onCreateClick}
-                  className="relative z-10 mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber text-white font-medium text-sm hover:bg-amber/90 transition-colors"
+                  className="mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
                 >
                   <Anchor size={16} weight="bold" />
                   Chart a New Adventure
                 </button>
-              ) : (
-                <p className="text-sm text-muted-foreground italic relative z-10">
-                  Your past adventures will appear here like messages in bottles
+              </div>
+            ) : (
+              <div className="py-16 flex flex-col items-center text-center px-8">
+                <div className="mb-4 opacity-20">
+                  <Anchor size={64} weight="duotone" className="text-muted-foreground" />
+                </div>
+                <p className="font-georgia italic text-base text-muted-foreground">
+                  No adventures in the log yet
                 </p>
-              )}
-            </div>
+              </div>
+            )
           ) : (
-            <div className="flex gap-6 overflow-x-auto py-4 px-2 -mx-2 snap-x md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:gap-8">
-              {displayed.map((trip) => (
-                <PolaroidCard key={trip.id} trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-10 gap-y-[50px] py-4">
+              {displayed.map((trip, index) => (
+                <div
+                  key={trip.id}
+                  className="flex justify-center animate-fade-in-up"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
+                </div>
               ))}
             </div>
           )}
