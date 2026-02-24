@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { differenceInDays } from "date-fns";
 import { Anchor } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrips } from "@/hooks/useTrips";
@@ -110,27 +109,17 @@ export default function Home({ onCreateClick }: Props) {
 
           {stripTrips.length === 0 ? (
             <div className="flex gap-5 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-              <div className="flex-shrink-0 w-[180px] h-[240px] rounded-xl border-2 border-dashed border-border flex items-center justify-center px-4">
+              <div className="flex-shrink-0 w-[180px] h-[280px] rounded-xl border-2 border-dashed border-border flex items-center justify-center px-4">
                 <p className="font-georgia italic text-sm text-muted-foreground text-center">More adventures coming...</p>
               </div>
             </div>
           ) : (
             <div className="flex gap-5 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-              {stripTrips.map((trip) => {
-                const days = trip.start_date ? differenceInDays(new Date(trip.start_date), new Date()) : null;
-                return (
-                  <div key={trip.id} className="flex-shrink-0 w-[180px]">
-                    <div className="h-[240px]">
-                      <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
-                    </div>
-                    {days !== null && days >= 0 && (
-                      <p className="font-georgia italic text-[11px] text-primary mt-1.5 text-center">
-                        {days === 0 ? "Today!" : `${days} days away`}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+              {stripTrips.map((trip) => (
+                <div key={trip.id} className="flex-shrink-0 w-[180px]">
+                  <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
+                </div>
+              ))}
             </div>
           )}
         </div>
