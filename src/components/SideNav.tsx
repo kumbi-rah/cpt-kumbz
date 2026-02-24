@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { House, Plus, GlobeHemisphereWest, Compass } from "@phosphor-icons/react";
+import { House, Plus, GlobeHemisphereWest, Compass, SignOut } from "@phosphor-icons/react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   onCreateClick?: () => void;
@@ -8,6 +9,7 @@ interface Props {
 export default function SideNav({ onCreateClick }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const isHome = location.pathname === "/";
   const isGlobe = location.pathname === "/globe";
 
@@ -47,13 +49,24 @@ export default function SideNav({ onCreateClick }: Props) {
       </nav>
 
       {/* Create button */}
-      <div className="px-4 pb-6">
+      <div className="px-4 pb-4">
         <button
           onClick={onCreateClick}
           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber text-primary-foreground font-medium text-sm hover:bg-amber/90 transition-colors"
         >
           <Plus size={18} weight="bold" />
           New Trip
+        </button>
+      </div>
+
+      {/* Logout */}
+      <div className="px-4 pb-6">
+        <button
+          onClick={() => signOut()}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <SignOut size={20} weight="duotone" />
+          Log Out
         </button>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, SignOut } from "@phosphor-icons/react";
+import { Compass } from "@phosphor-icons/react";
 import PolaroidCard from "@/components/PolaroidCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrips } from "@/hooks/useTrips";
@@ -10,7 +10,7 @@ import { getTripStatus } from "@/lib/tripStatus";
 import { useCountUp } from "@/lib/useCountUp";
 
 export default function Home() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { data: trips = [], isLoading } = useTrips();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"upcoming" | "active" | "past">("upcoming");
@@ -37,17 +37,15 @@ export default function Home() {
             <div className="flex items-center gap-2 md:hidden">
               <Compass size={28} weight="duotone" className="text-amber" />
               <div>
-                <h1 className="font-georgia italic text-2xl text-ink leading-tight">Cpt. Kumbz</h1>
-                <p className="font-georgia text-sm text-muted-foreground -mt-0.5">Adventures</p>
+              <h1 className="font-georgia italic text-3xl text-ink leading-tight">Cpt. Kumbz</h1>
+              <p className="font-georgia text-sm text-muted-foreground -mt-0.5">Adventures</p>
               </div>
             </div>
             <div className="hidden md:block">
-              <h1 className="font-georgia italic text-3xl text-ink leading-tight">Your Adventures</h1>
-              <p className="font-georgia text-sm text-muted-foreground">Plan and relive your journeys</p>
+              <h1 className="font-georgia italic text-4xl text-ink leading-tight">Your Adventures</h1>
+              <p className="font-georgia text-base text-muted-foreground">Plan and relive your journeys</p>
             </div>
-            <button onClick={() => signOut()} className="p-2 rounded-md text-muted-foreground hover:text-ink hover:bg-accent transition-colors">
-              <SignOut size={22} weight="duotone" />
-            </button>
+            {/* Logout is now in SideNav / BottomNav */}
           </div>
         </header>
 
@@ -57,7 +55,7 @@ export default function Home() {
             <button
               onClick={() => setTab("upcoming")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === "upcoming" ? "bg-amber text-white" : "text-muted-foreground hover:text-ink"
+               tab === "upcoming" ? "bg-amber text-white" : "text-muted-foreground hover:text-ink"
               }`}
             >
               Upcoming ({upcoming.length})

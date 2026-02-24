@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, ShareNetwork, Copy, MapPin, CalendarBlank, ListChecks, Bed, AirplaneTakeoff, Notepad, Camera, Star, Plus } from "@phosphor-icons/react";
+import { ArrowLeft, ShareNetwork, Copy, MapPin, CalendarBlank, ListChecks, Bed, AirplaneTakeoff, Notepad, Camera, Star, Plus, PencilSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ import ItineraryView from "@/components/ItineraryView";
 import PackingList from "@/components/PackingList";
 import { toast } from "sonner";
 import type { TripSection } from "@/hooks/useTrips";
+import EditTripDialog from "@/components/EditTripDialog";
 
 const SECTION_ICONS: Record<string, any> = {
   itinerary: CalendarBlank,
@@ -36,6 +37,7 @@ export default function TripDetail() {
   const { data: sections = [] } = useTripSections(id!);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<TripSection | null>(null);
+  const [editTripOpen, setEditTripOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -94,20 +96,29 @@ export default function TripDetail() {
           <div className="bg-card rounded-xl border p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="font-georgia text-xl md:text-2xl font-bold text-ink">{trip.name}</h1>
+                <h1 className="font-georgia text-2xl md:text-3xl font-bold text-ink">{trip.name}</h1>
                 {trip.destination && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                     <MapPin size={14} weight="duotone" className="text-teal" /> {formatDestination(trip.destination)}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {trip.start_date && format(new Date(trip.start_date), "MMM d")}
                   {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d, yyyy")}`}
                 </p>
               </div>
-              <Badge className={STATUS_COLORS[status]}>
-                {STATUS_LABELS[status]}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditTripOpen(true)}
+                  className="p-2 rounded-md text-muted-foreground hover:text-ink hover:bg-accent transition-colors"
+                  title="Edit trip"
+                >
+                  <PencilSimple size={18} weight="duotone" />
+                </button>
+                <Badge className={STATUS_COLORS[status]}>
+                  {STATUS_LABELS[status]}
+                </Badge>
+              </div>
             </div>
 
             {/* Share bar */}
@@ -220,6 +231,7 @@ export default function TripDetail() {
           onOpenChange={setEditorOpen}
           editSection={editingSection}
         />
+        {trip && <EditTripDialog open={editTripOpen} onOpenChange={setEditTripOpen} trip={trip} />}
       </div>
     </div>
   );

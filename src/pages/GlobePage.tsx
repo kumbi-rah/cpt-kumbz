@@ -22,8 +22,8 @@ export default function GlobePage() {
     <div className="min-h-screen pb-nav flex flex-col">
       <div className="max-w-6xl mx-auto w-full flex flex-col flex-1">
         <header className="px-5 pt-6 pb-2">
-          <h1 className="font-georgia text-xl md:text-3xl font-bold text-ink">Your World</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Explore your adventures across the globe</p>
+          <h1 className="font-georgia text-2xl md:text-4xl font-bold text-ink">Your World</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Explore your adventures across the globe</p>
         </header>
 
         <div className="flex-1 min-h-[400px] md:min-h-[600px] relative w-full" style={{ aspectRatio: "1 / 1", maxHeight: "70vh" }}>
@@ -39,18 +39,18 @@ export default function GlobePage() {
         <div className="px-5 pb-4">
           <div className="flex justify-around bg-card rounded-xl border py-3 md:py-5">
             <div className="text-center">
-              <p className="font-georgia text-xl md:text-2xl font-bold text-amber">{animTrips}</p>
-              <p className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wider">Trips</p>
+              <p className="font-georgia text-2xl md:text-3xl font-bold text-amber">{animTrips}</p>
+              <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">Trips</p>
             </div>
             <div className="w-px bg-border" />
             <div className="text-center">
-              <p className="font-georgia text-xl md:text-2xl font-bold text-teal">{animCountries}</p>
-              <p className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wider">Countries</p>
+              <p className="font-georgia text-2xl md:text-3xl font-bold text-teal">{animCountries}</p>
+              <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">Countries</p>
             </div>
             <div className="w-px bg-border" />
             <div className="text-center">
-              <p className="font-georgia text-xl md:text-2xl font-bold text-amber">{animMiles.toLocaleString()}</p>
-              <p className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wider">Miles</p>
+              <p className="font-georgia text-2xl md:text-3xl font-bold text-amber">{animMiles.toLocaleString()}</p>
+              <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">Miles</p>
             </div>
           </div>
         </div>
