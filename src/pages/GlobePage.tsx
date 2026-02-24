@@ -22,7 +22,7 @@ export default function GlobePage() {
         </header>
 
         {/* Globe */}
-        <div className="flex-1 min-h-[400px] md:min-h-[600px] relative">
+        <div className="flex-1 min-h-[400px] md:min-h-[600px] relative w-full" style={{ aspectRatio: "1 / 1", maxHeight: "70vh" }}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground font-georgia italic">Loading globe...</p>
