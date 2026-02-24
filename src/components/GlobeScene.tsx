@@ -3,6 +3,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { Trip } from "@/hooks/useTrips";
+import { formatDestination } from "@/lib/formatDestination";
 
 function latLngToPos(lat: number, lng: number, r = 1.03): [number, number, number] {
   const phi = ((90 - lat) * Math.PI) / 180;
@@ -60,7 +61,7 @@ function Pin({ trip, isUpcoming, onClick }: { trip: Trip; isUpcoming: boolean; o
         <Html distanceFactor={3} style={{ pointerEvents: "none" }}>
           <div className="bg-card px-2.5 py-1.5 rounded-lg shadow-lg text-xs font-georgia text-ink whitespace-nowrap border">
             <p className="font-bold">{trip.name}</p>
-            {trip.destination && <p className="text-[10px] text-muted-foreground">{trip.destination}</p>}
+            {trip.destination && <p className="text-[10px] text-muted-foreground">{formatDestination(trip.destination)}</p>}
           </div>
         </Html>
       )}
