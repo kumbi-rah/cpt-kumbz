@@ -144,6 +144,11 @@
   font-family: 'IM Fell English', Georgia, serif;
 }
 
+/* Cinzel cartographic font for day headers */
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
 /* Weathered edges */
 .weathered-edges {
   box-shadow:
@@ -159,6 +164,46 @@
   stroke-dasharray: 6 4;
   stroke-width: 2;
   stroke-linecap: round;
+}
+
+.treasure-trail-line-completed {
+  stroke: hsl(189 28% 40% / 0.4);
+  stroke-dasharray: 6 4;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Pulse glow animation for active trips */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(34 65% 48% / 0.4); }
+  50% { box-shadow: 0 0 0 6px hsl(34 65% 48% / 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Staggered fade in */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* Photo placeholder shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-placeholder {
+  background: linear-gradient(90deg, hsl(34 40% 85%) 25%, hsl(34 45% 90%) 50%, hsl(34 40% 85%) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* Scrollbar styling */

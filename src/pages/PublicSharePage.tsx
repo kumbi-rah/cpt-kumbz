@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { MapPin, CalendarBlank, Star, Compass } from "@phosphor-icons/react";
-import { useTripByShareToken, usePublicSections } from "@/hooks/useTrips";
+import { useTripByShareToken, usePublicSections, useItineraryItems } from "@/hooks/useTrips";
 import { SECTION_TYPE_LABELS } from "@/lib/constants";
 import { formatDestination } from "@/lib/formatDestination";
 import ItineraryView from "@/components/ItineraryView";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PublicSharePage() {
   const { shareToken } = useParams<{ shareToken: string }>();
@@ -13,8 +14,10 @@ export default function PublicSharePage() {
 
   if (tripLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="font-georgia italic text-muted-foreground">Loading trip...</p>
+      <div className="min-h-screen bg-background max-w-3xl mx-auto p-5 space-y-4">
+        <Skeleton className="h-56 w-full rounded-xl" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-32" />
       </div>
     );
   }
@@ -23,6 +26,19 @@ export default function PublicSharePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="font-georgia italic text-muted-foreground">Trip not found</p>
+      </div>
+    );
+  }
+
+  // If sharing is disabled, show a friendly message
+  if (trip.share_enabled === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center px-8">
+          <Compass size={48} weight="duotone" className="text-muted-foreground mx-auto mb-3 opacity-50" />
+          <p className="font-georgia italic text-lg text-muted-foreground">This page is not available</p>
+          <p className="text-sm text-muted-foreground mt-1">The trip owner has disabled public sharing.</p>
+        </div>
       </div>
     );
   }
@@ -69,7 +85,9 @@ export default function PublicSharePage() {
         {/* Public sections */}
         <div className="px-5 pb-8 space-y-4">
           {sectionsLoading ? (
-            <p className="text-sm text-muted-foreground italic">Loading...</p>
+            <div className="space-y-3">
+              {[1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+            </div>
           ) : sections.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No public information shared for this trip.</p>
           ) : (

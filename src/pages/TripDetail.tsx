@@ -4,15 +4,18 @@ import { format } from "date-fns";
 import { ArrowLeft, ShareNetwork, Copy, MapPin, CalendarBlank, ListChecks, Bed, AirplaneTakeoff, Notepad, Camera, Star, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrip, useTripSections } from "@/hooks/useTrips";
 import { ALWAYS_PRIVATE_TYPES, SECTION_TYPE_LABELS } from "@/lib/constants";
 import { formatDestination } from "@/lib/formatDestination";
+import { getTripStatus, STATUS_LABELS, STATUS_COLORS } from "@/lib/tripStatus";
 import ArrivalTracker from "@/components/ArrivalTracker";
 import PhotoGallery from "@/components/PhotoGallery";
 import ShareSettings from "@/components/ShareSettings";
 import SectionEditor from "@/components/SectionEditor";
 import ItineraryView from "@/components/ItineraryView";
+import PackingList from "@/components/PackingList";
 import { toast } from "sonner";
 import type { TripSection } from "@/hooks/useTrips";
 
@@ -35,20 +38,34 @@ export default function TripDetail() {
   const [editingSection, setEditingSection] = useState<TripSection | null>(null);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-georgia italic">Loading...</div>;
+    return (
+      <div className="min-h-screen pb-nav">
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-52 md:h-72 w-full" />
+          <div className="px-5 -mt-6 relative z-10">
+            <div className="bg-card rounded-xl border p-4 shadow-sm space-y-3">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
+
   if (!trip) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-georgia italic">Trip not found</div>;
   }
 
+  const status = getTripStatus(trip.start_date, trip.end_date);
   const hasPublicSections = sections.some((s) => s.is_public === true);
+  const showShareBar = trip.share_enabled && hasPublicSections;
   const shareUrl = `${window.location.origin}/share/${trip.share_token}`;
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareUrl);
     toast.success("Share link copied!");
   };
-
-  const isUpcoming = trip.start_date ? new Date(trip.start_date) > new Date() : false;
 
   const openEditor = (section?: TripSection) => {
     setEditingSection(section || null);
@@ -88,13 +105,13 @@ export default function TripDetail() {
                   {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d, yyyy")}`}
                 </p>
               </div>
-              <Badge className={isUpcoming ? "bg-amber text-white" : "bg-teal text-white"}>
-                {isUpcoming ? "Upcoming" : "Past"}
+              <Badge className={STATUS_COLORS[status]}>
+                {STATUS_LABELS[status]}
               </Badge>
             </div>
 
-            {/* Share bar — only when public sections exist */}
-            {hasPublicSections && (
+            {/* Share bar */}
+            {showShareBar && (
               <div className="flex items-center gap-2 mt-3 pt-3 border-t">
                 <ShareNetwork size={16} weight="duotone" className="text-amber" />
                 <p className="text-xs text-muted-foreground truncate flex-1">{shareUrl}</p>
@@ -132,6 +149,27 @@ export default function TripDetail() {
                     return (
                       <div key={s.id} className="cursor-pointer" onClick={() => openEditor(s)}>
                         <ItineraryView section={s} tripId={id!} />
+                      </div>
+                    );
+                  }
+
+                  // Render packing list with interactive checkboxes
+                  if (s.type === "packing_list") {
+                    return (
+                      <div key={s.id} className="bg-card rounded-lg border p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <ListChecks size={20} weight="duotone" className="text-amber flex-shrink-0" />
+                            <p className="text-sm font-medium text-ink">{s.title || "Packing List"}</p>
+                          </div>
+                          <button
+                            onClick={() => openEditor(s)}
+                            className="text-xs text-muted-foreground hover:text-ink"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                        <PackingList section={s} />
                       </div>
                     );
                   }

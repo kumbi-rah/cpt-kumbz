@@ -8,11 +8,16 @@ export type Arrival = Tables<"arrivals">;
 export type TripPhoto = Tables<"trip_photos">;
 export type ItineraryItem = Tables<"itinerary_items">;
 
+// ── Trips ──
+
 export function useTrips() {
   return useQuery({
     queryKey: ["trips"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("trips").select("*").order("start_date", { ascending: false });
+      const { data, error } = await supabase
+        .from("trips")
+        .select("id, name, destination, city, country, lat, lng, start_date, end_date, cover_photo_url, share_token, share_enabled, created_by, created_at")
+        .order("start_date", { ascending: false });
       if (error) throw error;
       return data as Trip[];
     },
@@ -35,13 +40,19 @@ export function useTripByShareToken(token: string) {
   return useQuery({
     queryKey: ["trip_share", token],
     queryFn: async () => {
-      const { data, error } = await supabase.from("trips").select("*").eq("share_token", token).single();
+      const { data, error } = await supabase
+        .from("trips")
+        .select("id, name, destination, city, country, lat, lng, start_date, end_date, cover_photo_url, share_token, share_enabled")
+        .eq("share_token", token)
+        .single();
       if (error) throw error;
       return data as Trip;
     },
     enabled: !!token,
   });
 }
+
+// ── Trip Sections ──
 
 export function useTripSections(tripId: string) {
   return useQuery({
@@ -73,11 +84,17 @@ export function usePublicSections(tripId: string) {
   });
 }
 
+// ── Arrivals ──
+
 export function useArrivals(tripId: string) {
   return useQuery({
     queryKey: ["arrivals", tripId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("arrivals").select("*").eq("trip_id", tripId).order("arrival_datetime");
+      const { data, error } = await supabase
+        .from("arrivals")
+        .select("id, person_name, flight_number, arrival_datetime, notes, trip_id")
+        .eq("trip_id", tripId)
+        .order("arrival_datetime");
       if (error) throw error;
       return data as Arrival[];
     },
@@ -85,17 +102,25 @@ export function useArrivals(tripId: string) {
   });
 }
 
+// ── Photos ──
+
 export function useTripPhotos(tripId: string) {
   return useQuery({
     queryKey: ["trip_photos", tripId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("trip_photos").select("*").eq("trip_id", tripId).order("uploaded_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("trip_photos")
+        .select("id, trip_id, storage_path, public_url, caption, uploaded_at, uploaded_by, width, height, file_size")
+        .eq("trip_id", tripId)
+        .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return data as TripPhoto[];
     },
     enabled: !!tripId,
   });
 }
+
+// ── Mutations ──
 
 export function useCreateTrip() {
   const qc = useQueryClient();
@@ -191,6 +216,8 @@ export function useDeleteArrival() {
   });
 }
 
+// ── Photos mutations ──
+
 export function useUploadPhoto() {
   const qc = useQueryClient();
   return useMutation({
@@ -199,11 +226,27 @@ export function useUploadPhoto() {
       const { error: uploadErr } = await supabase.storage.from("trip-photos").upload(path, file);
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from("trip-photos").getPublicUrl(path);
+
+      // Get image dimensions
+      let width: number | null = null;
+      let height: number | null = null;
+      try {
+        const img = new Image();
+        await new Promise<void>((resolve) => {
+          img.onload = () => { width = img.naturalWidth; height = img.naturalHeight; resolve(); };
+          img.onerror = () => resolve();
+          img.src = URL.createObjectURL(file);
+        });
+      } catch { /* ignore */ }
+
       const { error: dbErr } = await supabase.from("trip_photos").insert({
         trip_id: tripId,
         storage_path: path,
         public_url: urlData.publicUrl,
         uploaded_by: userId,
+        width,
+        height,
+        file_size: file.size,
       });
       if (dbErr) throw dbErr;
 
@@ -233,7 +276,18 @@ export function useDeletePhoto() {
   });
 }
 
-// ── Itinerary Items (dedicated table) ──
+export function useUpdatePhoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, caption }: { id: string; caption: string }) => {
+      const { error } = await supabase.from("trip_photos").update({ caption }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_photos"] }),
+  });
+}
+
+// ── Itinerary Items ──
 
 export function useItineraryItems(tripId: string) {
   return useQuery({
@@ -241,7 +295,7 @@ export function useItineraryItems(tripId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("itinerary_items")
-        .select("*")
+        .select("id, trip_id, day_number, item_time, activity, description, sort_order, completed, created_at")
         .eq("trip_id", tripId)
         .order("day_number")
         .order("sort_order");
@@ -249,6 +303,34 @@ export function useItineraryItems(tripId: string) {
       return data as ItineraryItem[];
     },
     enabled: !!tripId,
+  });
+}
+
+export function useToggleItineraryCompleted() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { error } = await supabase.from("itinerary_items").update({ completed }).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, completed }) => {
+      // Optimistic update
+      await qc.cancelQueries({ queryKey: ["itinerary_items"] });
+      const queries = qc.getQueriesData<ItineraryItem[]>({ queryKey: ["itinerary_items"] });
+      queries.forEach(([key, data]) => {
+        if (data) {
+          qc.setQueryData(key, data.map((it) => it.id === id ? { ...it, completed } : it));
+        }
+      });
+      return { queries };
+    },
+    onError: (_err, _vars, context) => {
+      // Revert
+      context?.queries.forEach(([key, data]) => {
+        if (data) qc.setQueryData(key, data);
+      });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["itinerary_items"] }),
   });
 }
 
@@ -285,7 +367,6 @@ export function useBulkSaveItineraryItems() {
       tripId: string;
       items: { id?: string; day_number: number; item_time: string; activity: string; description: string; sort_order: number }[];
     }) => {
-      // Delete all existing items for this trip, then insert fresh
       const { error: delErr } = await supabase.from("itinerary_items").delete().eq("trip_id", tripId);
       if (delErr) throw delErr;
 
