@@ -206,6 +206,44 @@
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* Section header decorative line */
+.section-header-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.section-header-line::before,
+.section-header-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, hsl(var(--vintage-amber) / 0.5), transparent);
+}
+
+/* Scroll unfold page transition */
+@keyframes scroll-unfold {
+  from {
+    opacity: 0;
+    transform: scaleY(0.96) translateY(8px);
+    transform-origin: top;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+    transform-origin: top;
+  }
+}
+
+.animate-scroll-unfold {
+  animation: scroll-unfold 0.4s ease-out forwards;
+}
+
+/* Amber skeleton pulse */
+@keyframes amber-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   height: 4px;

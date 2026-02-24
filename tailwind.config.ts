@@ -78,11 +78,21 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(34 65% 48% / 0.4)" },
           "50%": { boxShadow: "0 0 0 6px hsl(34 65% 48% / 0)" },
         },
+        "scroll-unfold": {
+          from: { opacity: "0", transform: "scaleY(0.96) translateY(8px)" },
+          to: { opacity: "1", transform: "scaleY(1) translateY(0)" },
+        },
+        "amber-pulse": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "scroll-unfold": "scroll-unfold 0.4s ease-out forwards",
+        "amber-pulse": "amber-pulse 1.5s ease-in-out infinite",
       },
     },
   },

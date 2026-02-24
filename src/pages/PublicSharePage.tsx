@@ -1,11 +1,13 @@
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { MapPin, CalendarBlank, Star, Compass } from "@phosphor-icons/react";
+import { MapPin, CalendarBlank, Star } from "@phosphor-icons/react";
 import { useTripByShareToken, usePublicSections, useItineraryItems } from "@/hooks/useTrips";
 import { SECTION_TYPE_LABELS } from "@/lib/constants";
 import { formatDestination } from "@/lib/formatDestination";
 import ItineraryView from "@/components/ItineraryView";
 import { Skeleton } from "@/components/ui/skeleton";
+import CompassRose from "@/components/icons/CompassRose";
+import { Anchor } from "@phosphor-icons/react";
 
 export default function PublicSharePage() {
   const { shareToken } = useParams<{ shareToken: string }>();
@@ -30,12 +32,11 @@ export default function PublicSharePage() {
     );
   }
 
-  // If sharing is disabled, show a friendly message
   if (trip.share_enabled === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center px-8">
-          <Compass size={48} weight="duotone" className="text-muted-foreground mx-auto mb-3 opacity-50" />
+          <Anchor size={48} weight="duotone" className="text-muted-foreground mx-auto mb-3 opacity-50" />
           <p className="font-georgia italic text-lg text-muted-foreground">This page is not available</p>
           <p className="text-sm text-muted-foreground mt-1">The trip owner has disabled public sharing.</p>
         </div>
@@ -44,7 +45,7 @@ export default function PublicSharePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-scroll-unfold">
       <div className="max-w-3xl mx-auto">
         {/* Hero */}
         <div className="relative h-56 md:h-72 overflow-hidden">
@@ -67,7 +68,7 @@ export default function PublicSharePage() {
 
         {/* Branding */}
         <div className="px-5 py-3 flex items-center gap-2 border-b bg-card">
-          <Compass size={18} weight="duotone" className="text-amber" />
+          <CompassRose size={18} className="text-amber" />
           <span className="font-georgia italic text-sm text-ink">Cpt. Kumbz Adventures</span>
         </div>
 

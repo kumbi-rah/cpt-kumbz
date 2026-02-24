@@ -18,17 +18,11 @@ function latLngToPos(lat: number, lng: number, r = 1.03): [number, number, numbe
 
 // Simplified world continent outlines as lat/lng polylines
 const CONTINENT_OUTLINES: [number, number][][] = [
-  // North America (simplified)
   [[60,-140],[65,-170],[72,-170],[71,-155],[60,-140],[55,-130],[48,-125],[35,-120],[25,-110],[20,-105],[15,-90],[18,-88],[20,-87],[22,-80],[25,-80],[30,-82],[30,-85],[35,-75],[40,-74],[42,-70],[45,-67],[47,-60],[50,-55],[55,-60],[60,-65],[60,-75],[62,-75],[65,-90],[65,-100],[70,-100],[72,-120],[68,-140],[60,-140]],
-  // South America (simplified)
   [[10,-75],[12,-72],[10,-62],[5,-52],[0,-50],[-5,-35],[-10,-37],[-15,-39],[-20,-40],[-25,-48],[-30,-50],[-35,-57],[-40,-63],[-45,-65],[-50,-70],[-55,-68],[-55,-65],[-50,-73],[-45,-73],[-40,-72],[-35,-72],[-30,-70],[-25,-65],[-15,-75],[-5,-80],[0,-78],[5,-77],[10,-75]],
-  // Europe (simplified)
   [[35,-10],[38,-8],[37,0],[43,3],[44,8],[46,3],[48,-5],[51,-10],[54,-8],[58,-5],[58,5],[56,10],[55,12],[57,18],[60,20],[63,20],[65,25],[70,25],[72,30],[70,40],[65,40],[60,30],[55,20],[50,20],[48,15],[47,10],[45,13],[42,18],[40,20],[38,24],[36,28],[34,25],[35,15],[38,10],[36,0],[35,-10]],
-  // Africa (simplified)
   [[35,-10],[35,0],[32,10],[30,32],[25,35],[20,37],[15,42],[12,44],[5,42],[0,42],[-5,40],[-10,40],[-15,35],[-20,35],[-25,33],[-30,30],[-35,20],[-34,18],[-30,17],[-20,12],[-15,12],[-10,14],[-5,12],[0,10],[5,2],[5,-5],[7,-10],[5,-10],[0,-1],[-5,8],[-5,12],[-2,10],[0,10],[3,10],[5,0],[5,-10],[10,-15],[15,-17],[20,-17],[25,-15],[30,-10],[35,-10]],
-  // Asia (simplified)
   [[35,30],[40,30],[42,40],[45,50],[50,55],[55,60],[60,65],[65,70],[70,70],[75,80],[72,100],[70,140],[65,170],[60,160],[55,155],[50,143],[45,140],[40,130],[35,130],[30,120],[25,120],[22,108],[20,105],[15,100],[10,100],[5,105],[0,105],[-5,105],[-8,115],[-8,120],[-5,120],[0,115],[5,115],[10,110],[15,108],[20,110],[22,115],[30,122],[35,128],[38,130],[40,132]],
-  // Australia (simplified)
   [[-12,130],[-15,125],[-20,118],[-25,114],[-30,115],[-32,116],[-35,118],[-37,140],[-38,145],[-38,148],[-35,150],[-30,153],[-25,153],[-20,148],[-18,146],[-15,145],[-12,142],[-12,135],[-12,130]],
 ];
 
@@ -77,6 +71,58 @@ function GlobeMesh() {
   );
 }
 
+/** Dashed route lines between sequential trip pins */
+function RouteLines({ trips }: { trips: Trip[] }) {
+  const routeLines = useMemo(() => {
+    const validTrips = trips
+      .filter((t) => t.lat != null && t.lng != null)
+      .sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
+
+    if (validTrips.length < 2) return [];
+
+    const lines: THREE.BufferGeometry[] = [];
+    for (let i = 0; i < validTrips.length - 1; i++) {
+      const a = validTrips[i];
+      const b = validTrips[i + 1];
+      // Create arc between points
+      const startVec = latLngToVec3(a.lat!, a.lng!, 1.01);
+      const endVec = latLngToVec3(b.lat!, b.lng!, 1.01);
+      const points: THREE.Vector3[] = [];
+      const segments = 32;
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        const p = new THREE.Vector3().lerpVectors(startVec, endVec, t);
+        p.normalize().multiplyScalar(1.01 + Math.sin(t * Math.PI) * 0.03);
+        points.push(p);
+      }
+      lines.push(new THREE.BufferGeometry().setFromPoints(points));
+    }
+    return lines;
+  }, [trips]);
+
+  return (
+    <>
+      {routeLines.map((geo, i) => (
+        <primitive
+          key={`route-${i}`}
+          object={new THREE.Line(
+            geo,
+            new THREE.LineDashedMaterial({
+              color: '#C8832A',
+              dashSize: 0.02,
+              gapSize: 0.015,
+              transparent: true,
+              opacity: 0.5,
+            })
+          )}
+          onAfterRender={(renderer: any, scene: any, camera: any, geometry: any, material: any, group: any) => {}}
+          ref={(ref: any) => { if (ref) ref.computeLineDistances(); }}
+        />
+      ))}
+    </>
+  );
+}
+
 function Pin({ trip, status, onClick }: { trip: Trip; status: TripStatus; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
   const pos = latLngToPos(trip.lat!, trip.lng!);
@@ -88,7 +134,6 @@ function Pin({ trip, status, onClick }: { trip: Trip; status: TripStatus; onClic
     if (meshRef.current) {
       meshRef.current.scale.setScalar(hovered ? 1.4 : 1);
     }
-    // Pulse animation for active pins
     if (glowRef.current && status === "active") {
       const s = 1 + Math.sin(clock.getElapsedTime() * 3) * 0.4;
       glowRef.current.scale.setScalar(s);
@@ -97,7 +142,6 @@ function Pin({ trip, status, onClick }: { trip: Trip; status: TripStatus; onClic
 
   return (
     <group position={pos}>
-      {/* Pulse glow ring for active */}
       {status === "active" && (
         <mesh ref={glowRef}>
           <sphereGeometry args={[0.04, 16, 16]} />
@@ -138,6 +182,7 @@ export default function GlobeScene({ trips, onTripClick }: GlobeSceneProps) {
       <directionalLight position={[-3, -1, -3]} intensity={0.3} />
       <Suspense fallback={null}>
         <GlobeMesh />
+        <RouteLines trips={trips} />
         {trips
           .filter((t) => t.lat != null && t.lng != null)
           .map((trip) => {
