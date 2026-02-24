@@ -1,207 +1,111 @@
 
 
-## Comprehensive App Improvements (13 Items)
+## Migrate Itinerary to `itinerary_items` Table + Pirate Treasure Map Styling
 
-This plan addresses all 13 requested fixes and improvements across the app. Here's what will change:
+### What changes
 
----
+**Part 1: Data layer -- use `itinerary_items` table instead of JSONB**
 
-### 1. Desktop Responsive Layout
+The `itinerary_items` table already exists in Supabase with columns: `id`, `trip_id`, `day_number`, `item_time`, `activity`, `description`, `sort_order`, `created_at`. Currently the app stores itinerary data as JSON inside `trip_sections.content`. We'll switch to reading/writing from this dedicated table.
 
-**New file: `src/components/SideNav.tsx`**
-- Desktop-only vertical sidebar (`hidden md:flex`) with Home, Globe links and a Create (+) button
-- Uses Phosphor icons and the vintage amber/teal color scheme
-- Fixed to the left side, full viewport height
+**Part 2: Treasure map visual overhaul**
 
-**Modified: `src/components/BottomNav.tsx`**
-- Add `md:hidden` to hide on desktop screens
+Replace the current simple parchment styling with a full pirate treasure map aesthetic -- dashed SVG trail lines connecting items, hand-drawn X markers, cartographic Google Font (IM Fell English), deep sepia toning, and weathered edge effects.
 
-**Modified: `src/App.tsx`**
-- Wrap layout in a flex container: SideNav on the left, main content on the right with `md:ml-[sidebar-width]`
-
-**Modified: `src/pages/Index.tsx`**
-- Add `max-w-6xl mx-auto` wrapper
-- Polaroid strip becomes a responsive grid: `md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
-- Header text scales up with `md:text-3xl`
-
-**Modified: `src/pages/GlobePage.tsx`**
-- `max-w-6xl mx-auto` wrapper, globe min-height `md:min-h-[600px]`
-
-**Modified: `src/pages/TripDetail.tsx`**
-- `max-w-4xl mx-auto` wrapper, hero taller on desktop `md:h-72`
-
-**Modified: `src/index.css`**
-- `.pb-nav` padding removed on desktop via media query
+**Part 3: UI/UX improvement suggestions** (analysis provided at the end)
 
 ---
 
-### 2. Trip Sections -- Add/Edit Content
+### Technical Details
 
-**New file: `src/components/SectionEditor.tsx`**
-- A dialog to create new sections (pick type from dropdown, add title)
-- For itinerary sections: a structured editor where each item has a time field and an activity/description field
-- Users can add multiple items; content stored as JSON array in the `content` column
-- Edit existing sections by clicking on them
+**File: `index.html`**
+- Add Google Font import for "IM Fell English" (serif, cartographic feel)
 
-**Modified: `src/hooks/useTrips.ts`**
-- Add `useCreateSection` and `useUpdateSection` mutation hooks
+**File: `src/hooks/useTrips.ts`**
+- Define an `ItineraryItem` type manually (since the table isn't in the generated types, we'll use raw Supabase queries with explicit typing):
+  ```
+  { id: string; trip_id: string; day_number: number; item_time: string | null;
+    activity: string; description: string | null; sort_order: number; created_at: string }
+  ```
+- Add `useItineraryItems(tripId)` -- fetches from `itinerary_items` where `trip_id = tripId`, ordered by `day_number`, then `sort_order`
+- Add `useCreateItineraryItem()` -- inserts a row into `itinerary_items`
+- Add `useUpdateItineraryItem()` -- updates a row by id
+- Add `useDeleteItineraryItem()` -- deletes a row by id
+- Add `useBulkUpsertItineraryItems()` -- for saving the entire editor state (delete removed items, upsert current items)
 
-**Modified: `src/pages/TripDetail.tsx`**
-- Add "Add Section" button in the Sections tab
-- Sections become clickable to open the editor
+**File: `src/components/SectionEditor.tsx`**
+- When editing an itinerary section, load items from `useItineraryItems(tripId)` instead of parsing `section.content`
+- Editor fields per item: `day_number` (number input), `item_time` (text), `activity` (text), `description` (optional textarea)
+- Group items by day in the editor UI with "Add Day" and "Add Item" buttons
+- On save, bulk upsert items to `itinerary_items` table (delete removed, insert new, update existing)
+- Non-itinerary sections continue using `trip_sections.content` JSONB as before
 
----
+**File: `src/components/ItineraryView.tsx`** (major rewrite)
+- Fetch items from `useItineraryItems(tripId)` instead of reading `section.content`
+- Group items by `day_number` and render each day as a section
+- Visual overhaul:
+  - Full parchment background with CSS texture (layered radial gradients simulating stains/aging)
+  - Weathered edges using `box-shadow` insets and a torn-paper border effect
+  - Each item marked with a hand-drawn style dark ink X character
+  - SVG dashed vertical line connecting each X to the next (like a dotted trail on a map)
+  - Use "IM Fell English" font for all itinerary text
+  - Sepia color palette: dark brown ink (#3B2F1E), faded amber accents
+  - Day headers styled like map region labels with decorative underlines
 
-### 3. Itinerary Section -- Treasure Map Theme
+**File: `src/pages/TripDetail.tsx`**
+- Pass `tripId` to `ItineraryView` (it currently only receives `section`)
+- Update the click handler for itinerary sections to pass both section and tripId context
 
-**New file: `src/components/ItineraryView.tsx`**
-- Renders itinerary items with a parchment/treasure-map background
-- Uses X-marks as bullet points instead of standard bullets
-- Applies a cartographic/hand-drawn font feel via Playfair Display (already loaded)
-- Weathered edges, aged parchment gradient background
+**File: `src/pages/PublicSharePage.tsx`**
+- Same update: pass `tripId` to `ItineraryView` for public display
 
-**Modified: `src/index.css`**
-- Add `.parchment-bg` and `.treasure-map` CSS classes with aged texture, weathered borders
-
-**Modified: `src/pages/TripDetail.tsx`**
-- When displaying an itinerary section, render it using `ItineraryView` instead of raw JSON
-
----
-
-### 4. Cover Photo Logic
-
-**Modified: `src/hooks/useTrips.ts`**
-- In `useUploadPhoto`, after inserting the photo record, check if the trip has no `cover_photo_url`. If not, update it with the new photo's public URL
-- Invalidate both `trip_photos` and `trips` queries on success
-
-**Modified: `src/components/PhotoGallery.tsx`**
-- Add a "Set as Cover" button on each photo (visible on hover)
-- Calls `useUpdateTrip` to set `cover_photo_url` on the trip
-
----
-
-### 5. Trip Name Truncation Fix
-
-**Modified: `src/components/PolaroidCard.tsx`**
-- The trip name uses `truncate` CSS class which clips text. The card width `w-52` is too narrow for longer names. On desktop (grid layout), cards will be wider and names won't truncate. On mobile, ensure the `truncate` class doesn't cut off the year portion by slightly increasing card caption area or removing `truncate` from the name field.
-
-This is a CSS issue -- the `truncate` class on `p.font-georgia` in the caption area is cutting the name. The fix is to allow wrapping for the name (`line-clamp-2` instead of `truncate`).
+**File: `src/index.css`**
+- Enhanced `.parchment-bg` class with more realistic aged texture
+- New `.treasure-map-text` class using "IM Fell English" font
+- New `.weathered-edges` class for the torn/burned border effect
+- CSS for the dashed trail connector
 
 ---
 
-### 6. Destination Field Cleanup
+### Visual Design (Treasure Map Theme)
 
-**New utility: `src/lib/formatDestination.ts`**
-- A `formatDestination(raw: string): string` function that extracts city + country from a full geocoded address
-- Logic: split by comma, take first item (city) and last item (country), combine as "City, Country"
-
-**Modified files:** `PolaroidCard.tsx`, `TripDetail.tsx`, `GlobeScene.tsx`, `PublicSharePage.tsx`
-- All places that display `trip.destination` will use `formatDestination(trip.destination)` instead of the raw string
-
----
-
-### 7. Hero Banner Placeholder
-
-**Modified: `src/pages/TripDetail.tsx`**
-- Replace the flat grey `bg-gradient-to-br from-amber/20 to-teal/20` with a warm parchment gradient: `bg-gradient-to-br from-amber/30 via-[hsl(38,30%,80%)] to-amber/20`
-- Apply the vintage filter overlays (vignette, grain) to the placeholder too (already applied)
-- Add a subtle compass or map illustration via CSS background pattern
-
-**Modified: `src/pages/PublicSharePage.tsx`**
-- Same parchment placeholder treatment
+The itinerary view will look like an old explorer's map with:
+- **Background**: Multi-layered parchment gradient with subtle stain spots (radial gradients)
+- **Edges**: Inset shadows creating a burnt/weathered border appearance
+- **X Markers**: Dark ink X characters (not emoji), styled large and slightly rotated for a hand-drawn feel
+- **Trail Line**: An SVG with a dashed stroke connecting each X vertically, like a dotted path on a treasure map
+- **Typography**: "IM Fell English" Google Font -- an old-style serif that looks hand-set
+- **Day Headers**: Styled like map region labels with small decorative flourishes
+- **Colors**: Deep brown ink (#3B2F1E), warm amber (#B8860B), faded parchment (#F5E6C8)
 
 ---
 
-### 8. Polaroid Card Stacking
+### UI/UX Improvement Suggestions
 
-**Modified: `src/components/PolaroidCard.tsx`**
-- The stacked card effect already exists in the current code (bottom card at +3.5deg, middle at -2.2deg, top at +0.8deg). However, the hover effect only does `group-hover:-translate-y-2.5`.
-- Update hover to also straighten rotation: `group-hover:!rotate-0 group-hover:-translate-y-2.5`
-- Verify the background colors match requested: bottom #DDD4BE, middle #E8DFC8, top uses `bg-polaroid` (should map to #FAF8F3)
-- Ensure these render properly and aren't being overridden
+After analyzing the full app, here are best-practice improvements to consider for future iterations:
 
----
-
-### 9. Empty State on Home
-
-**Modified: `src/pages/Index.tsx`**
-- Replace the plain text empty state with a styled parchment card featuring:
-  - A Compass icon (already imported)
-  - "No adventures yet" in Georgia/Playfair font
-  - "Tap the + button to plan your first trip" subtitle
-  - Warm parchment background with vintage treatment
+1. **Loading skeletons instead of italic text** -- Replace "Loading..." text with skeleton placeholder components (shimmer cards, skeleton rows) for a more polished perceived performance
+2. **Toast feedback on all mutations** -- Some actions like "Set as Cover" and section toggles should show success/error toasts consistently
+3. **Confirm dialogs for destructive actions** -- Deleting photos, sections, and arrivals should use an AlertDialog confirmation rather than instant deletion
+4. **Keyboard accessibility** -- Many interactive elements use `<div onClick>` instead of `<button>`. These should be semantic buttons or have `role="button"` + `tabIndex` + `onKeyDown`
+5. **Form validation** -- The Create Trip and Section Editor dialogs lack input validation (e.g., required trip name, date range validation). Add zod schemas with react-hook-form
+6. **Optimistic updates** -- Mutations like toggling section visibility or reordering could use optimistic updates for snappier UX
+7. **Drag-and-drop reordering** -- Itinerary items and sections would benefit from drag-to-reorder rather than manual sort_order
+8. **Dark mode polish** -- The dark mode variables exist but some components (parchment bg, polaroid cards) may not adapt well. Test and adjust
+9. **Image optimization** -- Cover photos are served at full resolution. Consider using Supabase image transforms or `srcSet` for responsive image loading
+10. **Empty state illustrations** -- The globe and trip detail pages could use more engaging empty states with illustrations rather than plain text
 
 ---
 
-### 10. Share Link Visibility
+### Summary of files changed
 
-**Modified: `src/pages/TripDetail.tsx`**
-- Conditionally render the share bar: only show it when `sections.some(s => s.is_public === true)`
-- When no sections are public, hide the share URL bar entirely
-
----
-
-### 11. Miles Calculation Fix
-
-**Modified: `src/lib/haversine.ts`**
-- `totalMiles` currently calculates distance between consecutive trips, which doesn't match the desired behavior
-- Change to: sum the distance from a fixed home base coordinate to each PAST trip's lat/lng
-- Add a `HOME_BASE` constant (defaulting to a reasonable location -- will need user input or a sensible default like New York: 40.7128, -74.0060)
-- Filter to only include past trips (where `end_date` exists and is before today)
-
-**Modified: `src/pages/Index.tsx` and `src/pages/GlobePage.tsx`**
-- Pass only past trips to `totalMiles` instead of all trips
-
----
-
-### 12. Arrivals Tab -- Confirm Full Functionality
-
-The `ArrivalTracker` component already has:
-- Add arrival dialog with person name, flight number, arrival date/time, notes fields
-- Delete functionality per row
-- Table display with all fields
-
-**Status: Already fully implemented.** No changes needed. The existing implementation covers add/delete with all required fields. Edit functionality is not currently present -- will add an edit button that opens the same dialog pre-filled with existing data.
-
-**Modified: `src/components/ArrivalTracker.tsx`**
-- Add edit functionality: clicking the pencil icon opens the dialog pre-filled with the arrival data
-- Add `useUpdateArrival` hook
-
-**Modified: `src/hooks/useTrips.ts`**
-- Add `useUpdateArrival` mutation hook
-
----
-
-### 13. Share Tab -- Public/Private Toggles
-
-The `ShareSettings` component already has:
-- Per-section toggle using Switch
-- Always-private types (lodging, arrivals, packing_list, notes, photos) are locked with no toggle
-- Toggle calls `useToggleSectionPublic` to save `is_public` to Supabase
-
-**Status: Already implemented correctly.** The existing code checks `ALWAYS_PRIVATE_TYPES` and disables toggles for those types, showing a lock icon instead. No changes needed here.
-
----
-
-### Summary of All Files
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/components/SideNav.tsx` | **New** -- desktop sidebar nav |
-| `src/components/SectionEditor.tsx` | **New** -- create/edit trip sections |
-| `src/components/ItineraryView.tsx` | **New** -- treasure map itinerary renderer |
-| `src/lib/formatDestination.ts` | **New** -- destination string cleanup |
-| `src/components/BottomNav.tsx` | Add `md:hidden` |
-| `src/App.tsx` | Flex layout with SideNav |
-| `src/pages/Index.tsx` | Responsive grid, empty state, max-width, miles fix |
-| `src/pages/GlobePage.tsx` | Responsive sizing, miles fix |
-| `src/pages/TripDetail.tsx` | Responsive, section editor, share link conditional, hero placeholder, itinerary view |
-| `src/pages/PublicSharePage.tsx` | Hero placeholder, destination cleanup |
-| `src/components/PolaroidCard.tsx` | Responsive sizing, name truncation fix, destination cleanup, hover fix |
-| `src/components/GlobeScene.tsx` | Destination cleanup |
-| `src/components/PhotoGallery.tsx` | "Set as Cover" button |
-| `src/components/ArrivalTracker.tsx` | Add edit functionality |
-| `src/hooks/useTrips.ts` | Cover photo auto-set, section CRUD hooks, arrival update hook |
-| `src/lib/haversine.ts` | Fix miles calculation for past trips from home base |
-| `src/index.css` | Desktop pb-nav fix, parchment/treasure-map CSS |
+| `index.html` | Add IM Fell English Google Font |
+| `src/hooks/useTrips.ts` | Add itinerary_items CRUD hooks + type |
+| `src/components/SectionEditor.tsx` | Rewrite itinerary editing to use itinerary_items table, grouped by day |
+| `src/components/ItineraryView.tsx` | Major rewrite: fetch from DB, treasure map styling with SVG trail |
+| `src/pages/TripDetail.tsx` | Pass tripId to ItineraryView |
+| `src/pages/PublicSharePage.tsx` | Pass tripId to ItineraryView |
+| `src/index.css` | Enhanced parchment, weathered edges, treasure map font classes |
 
