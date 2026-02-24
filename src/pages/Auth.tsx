@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "@phosphor-icons/react";
+import { Compass, GoogleLogo } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -54,6 +55,28 @@ export default function Auth() {
               {loading ? "..." : mode === "login" ? "Sign In" : "Sign Up"}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={async () => {
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: window.location.origin },
+              });
+              if (error) toast.error(error.message);
+            }}
+          >
+            <GoogleLogo size={18} weight="bold" />
+            Continue with Google
+          </Button>
           <p className="text-xs text-muted-foreground text-center mt-4">
             {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
