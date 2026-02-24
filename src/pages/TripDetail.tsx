@@ -131,7 +131,7 @@ export default function TripDetail() {
                   if (s.type === "itinerary") {
                     return (
                       <div key={s.id} className="cursor-pointer" onClick={() => openEditor(s)}>
-                        <ItineraryView section={s} />
+                        <ItineraryView section={s} tripId={id!} />
                       </div>
                     );
                   }

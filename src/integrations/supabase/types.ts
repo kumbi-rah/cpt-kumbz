@@ -49,6 +49,47 @@ export type Database = {
           },
         ]
       }
+      itinerary_items: {
+        Row: {
+          activity: string
+          created_at: string | null
+          day_number: number
+          description: string | null
+          id: string
+          item_time: string | null
+          sort_order: number | null
+          trip_id: string | null
+        }
+        Insert: {
+          activity: string
+          created_at?: string | null
+          day_number: number
+          description?: string | null
+          id?: string
+          item_time?: string | null
+          sort_order?: number | null
+          trip_id?: string | null
+        }
+        Update: {
+          activity?: string
+          created_at?: string | null
+          day_number?: number
+          description?: string | null
+          id?: string
+          item_time?: string | null
+          sort_order?: number | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_items_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_photos: {
         Row: {
           caption: string | null
