@@ -79,12 +79,20 @@
   }
 }
 
-/* Typography */
+/* ── Typography ── */
 .font-georgia {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
 }
 
-/* Vintage photo filter */
+.treasure-map-text {
+  font-family: 'IM Fell English', Georgia, serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+/* ── Vintage photo filter ── */
 .vintage-filter {
   filter: sepia(0.45) contrast(1.08) brightness(0.92) saturate(0.75);
 }
@@ -115,7 +123,7 @@
   pointer-events: none;
 }
 
-/* Bottom nav safe area */
+/* ── Bottom nav safe area ── */
 .pb-nav {
   padding-bottom: 5rem;
 }
@@ -126,7 +134,7 @@
   }
 }
 
-/* Parchment / treasure map background */
+/* ── Parchment / treasure map background ── */
 .parchment-bg {
   background:
     radial-gradient(ellipse at 20% 30%, hsl(34 40% 78% / 0.4) 0%, transparent 50%),
@@ -141,17 +149,7 @@
     );
 }
 
-/* Treasure map typography */
-.treasure-map-text {
-  font-family: 'IM Fell English', Georgia, serif;
-}
-
-/* Cinzel cartographic font for day headers */
-.font-cinzel {
-  font-family: 'Cinzel', Georgia, serif;
-}
-
-/* Weathered edges */
+/* ── Weathered edges ── */
 .weathered-edges {
   box-shadow:
     inset 0 0 40px hsl(34 50% 40% / 0.2),
@@ -160,7 +158,7 @@
     inset 0 -2px 8px hsl(28 45% 30% / 0.1);
 }
 
-/* Treasure map trail connector */
+/* ── Treasure map trail connector ── */
 .treasure-trail-line {
   stroke: hsl(30 40% 25%);
   stroke-dasharray: 6 4;
@@ -175,50 +173,7 @@
   stroke-linecap: round;
 }
 
-/* Pulse glow animation for active trips */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(34 65% 48% / 0.4); }
-  50% { box-shadow: 0 0 0 6px hsl(34 65% 48% / 0); }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* Pulse glow for text (no box-shadow) */
-@keyframes pulse-glow-text {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.animate-pulse-glow-text {
-  animation: pulse-glow-text 2s ease-in-out infinite;
-}
-
-/* Staggered fade in */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out forwards;
-  opacity: 0;
-}
-
-/* Photo placeholder shimmer */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.shimmer-placeholder {
-  background: linear-gradient(90deg, hsl(34 40% 85%) 25%, hsl(34 45% 90%) 50%, hsl(34 40% 85%) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-/* Section header decorative line */
+/* ── Section header decorative line ── */
 .section-header-line {
   display: flex;
   align-items: center;
@@ -232,7 +187,66 @@
   background: linear-gradient(to right, transparent, hsl(var(--vintage-amber) / 0.5), transparent);
 }
 
-/* Scroll unfold page transition */
+/* ── Amber shimmer skeleton ── */
+@keyframes shimmer-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(200,131,42,0.08) 0%,
+    rgba(200,131,42,0.18) 50%,
+    rgba(200,131,42,0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-skeleton 1.6s ease-in-out infinite;
+}
+
+/* ── Pulse glow animation for active trips ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(34 65% 48% / 0.4); }
+  50% { box-shadow: 0 0 0 6px hsl(34 65% 48% / 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-glow-text {
+  animation: pulse-glow-text 2s ease-in-out infinite;
+}
+
+/* ── Staggered fade in ── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* ── Photo placeholder shimmer ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-placeholder {
+  background: linear-gradient(90deg, hsl(34 40% 85%) 25%, hsl(34 45% 90%) 50%, hsl(34 40% 85%) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Scroll unfold page transition ── */
 @keyframes scroll-unfold {
   from {
     opacity: 0;
@@ -250,21 +264,83 @@
   animation: scroll-unfold 0.4s ease-out forwards;
 }
 
-/* Amber skeleton pulse */
-@keyframes amber-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
+/* ── Page enter transition ── */
+@keyframes page-enter {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Scrollbar styling */
+.animate-page-enter {
+  animation: page-enter 220ms ease-out forwards;
+}
+
+/* ── Pirate button style ── */
+.pirate-btn {
+  @apply bg-primary text-primary-foreground font-medium;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: filter 150ms ease, transform 80ms ease;
+}
+
+.pirate-btn:hover {
+  filter: brightness(1.08);
+}
+
+.pirate-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Input focus states ── */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(200,131,42,0.6) !important;
+  box-shadow: 0 0 0 3px rgba(200,131,42,0.12) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* ── Scrollbar styling ── */
 ::-webkit-scrollbar {
-  height: 4px;
-  width: 4px;
+  height: 6px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 2px;
+  background: rgba(200,131,42,0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(200,131,42,0.5);
+}
+
+/* ── Selection highlight ── */
+::selection {
+  background: rgba(200,131,42,0.2);
+  color: #2A2218;
+}
+
+/* ── Card hover transitions ── */
+.transition-shadow {
+  transition: box-shadow 200ms ease;
+}
+
+/* ── Mapbox popup override ── */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

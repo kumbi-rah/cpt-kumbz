@@ -39,7 +39,7 @@ function AppLayout() {
   return (
     <div className="flex min-h-screen w-full">
       {user && <SideNav onCreateClick={() => setCreateOpen(true)} />}
-      <main className={`flex-1 ${user ? "md:ml-[200px]" : ""}`}>
+      <main className={`flex-1 animate-page-enter ${user ? "md:ml-[200px]" : ""}`}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
