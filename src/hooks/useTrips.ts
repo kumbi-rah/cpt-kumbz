@@ -6,6 +6,7 @@ export type Trip = Tables<"trips">;
 export type TripSection = Tables<"trip_sections">;
 export type Arrival = Tables<"arrivals">;
 export type TripPhoto = Tables<"trip_photos">;
+export type ItineraryItem = Tables<"itinerary_items">;
 
 export function useTrips() {
   return useQuery({
@@ -229,5 +230,78 @@ export function useDeletePhoto() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["trip_photos"] }),
+  });
+}
+
+// ── Itinerary Items (dedicated table) ──
+
+export function useItineraryItems(tripId: string) {
+  return useQuery({
+    queryKey: ["itinerary_items", tripId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("itinerary_items")
+        .select("*")
+        .eq("trip_id", tripId)
+        .order("day_number")
+        .order("sort_order");
+      if (error) throw error;
+      return data as ItineraryItem[];
+    },
+    enabled: !!tripId,
+  });
+}
+
+export function useCreateItineraryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: TablesInsert<"itinerary_items">) => {
+      const { data, error } = await supabase.from("itinerary_items").insert(item).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["itinerary_items"] }),
+  });
+}
+
+export function useDeleteItineraryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["itinerary_items"] }),
+  });
+}
+
+export function useBulkSaveItineraryItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      tripId,
+      items,
+    }: {
+      tripId: string;
+      items: { id?: string; day_number: number; item_time: string; activity: string; description: string; sort_order: number }[];
+    }) => {
+      // Delete all existing items for this trip, then insert fresh
+      const { error: delErr } = await supabase.from("itinerary_items").delete().eq("trip_id", tripId);
+      if (delErr) throw delErr;
+
+      if (items.length > 0) {
+        const rows = items.map((it) => ({
+          trip_id: tripId,
+          day_number: it.day_number,
+          item_time: it.item_time || null,
+          activity: it.activity,
+          description: it.description || null,
+          sort_order: it.sort_order,
+        }));
+        const { error: insErr } = await supabase.from("itinerary_items").insert(rows);
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["itinerary_items"] }),
   });
 }

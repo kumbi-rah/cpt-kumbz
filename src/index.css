@@ -126,13 +126,39 @@
 
 /* Parchment / treasure map background */
 .parchment-bg {
-  background: linear-gradient(
-    135deg,
-    hsl(38 40% 88%) 0%,
-    hsl(36 35% 85%) 30%,
-    hsl(34 30% 82%) 60%,
-    hsl(38 38% 86%) 100%
-  );
+  background:
+    radial-gradient(ellipse at 20% 30%, hsl(34 40% 78% / 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 60%, hsl(30 35% 72% / 0.3) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 80%, hsl(28 30% 70% / 0.25) 0%, transparent 40%),
+    linear-gradient(
+      135deg,
+      hsl(38 40% 88%) 0%,
+      hsl(36 35% 85%) 30%,
+      hsl(34 30% 80%) 60%,
+      hsl(38 38% 86%) 100%
+    );
+}
+
+/* Treasure map typography */
+.treasure-map-text {
+  font-family: 'IM Fell English', Georgia, serif;
+}
+
+/* Weathered edges */
+.weathered-edges {
+  box-shadow:
+    inset 0 0 40px hsl(34 50% 40% / 0.2),
+    inset 0 0 80px hsl(30 40% 35% / 0.1),
+    inset 0 2px 8px hsl(28 45% 30% / 0.15),
+    inset 0 -2px 8px hsl(28 45% 30% / 0.1);
+}
+
+/* Treasure map trail connector */
+.treasure-trail-line {
+  stroke: hsl(30 40% 25%);
+  stroke-dasharray: 6 4;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 /* Scrollbar styling */

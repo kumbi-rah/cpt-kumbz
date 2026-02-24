@@ -75,7 +75,7 @@ export default function PublicSharePage() {
           ) : (
             sections.map((s) => {
               if (s.type === "itinerary") {
-                return <ItineraryView key={s.id} section={s} />;
+                return <ItineraryView key={s.id} section={s} tripId={trip.id} />;
               }
               const Icon = Star;
               return (
