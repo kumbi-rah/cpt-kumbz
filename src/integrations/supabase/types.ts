@@ -52,6 +52,7 @@ export type Database = {
       itinerary_items: {
         Row: {
           activity: string
+          completed: boolean | null
           created_at: string | null
           day_number: number
           description: string | null
@@ -62,6 +63,7 @@ export type Database = {
         }
         Insert: {
           activity: string
+          completed?: boolean | null
           created_at?: string | null
           day_number: number
           description?: string | null
@@ -72,6 +74,7 @@ export type Database = {
         }
         Update: {
           activity?: string
+          completed?: boolean | null
           created_at?: string | null
           day_number?: number
           description?: string | null
@@ -93,30 +96,39 @@ export type Database = {
       trip_photos: {
         Row: {
           caption: string | null
+          file_size: number | null
+          height: number | null
           id: string
           public_url: string | null
           storage_path: string | null
           trip_id: string | null
           uploaded_at: string | null
           uploaded_by: string | null
+          width: number | null
         }
         Insert: {
           caption?: string | null
+          file_size?: number | null
+          height?: number | null
           id?: string
           public_url?: string | null
           storage_path?: string | null
           trip_id?: string | null
           uploaded_at?: string | null
           uploaded_by?: string | null
+          width?: number | null
         }
         Update: {
           caption?: string | null
+          file_size?: number | null
+          height?: number | null
           id?: string
           public_url?: string | null
           storage_path?: string | null
           trip_id?: string | null
           uploaded_at?: string | null
           uploaded_by?: string | null
+          width?: number | null
         }
         Relationships: [
           {
@@ -168,6 +180,8 @@ export type Database = {
       }
       trips: {
         Row: {
+          city: string | null
+          country: string | null
           cover_photo_url: string | null
           created_at: string | null
           created_by: string | null
@@ -177,10 +191,13 @@ export type Database = {
           lat: number | null
           lng: number | null
           name: string
+          share_enabled: boolean | null
           share_token: string
           start_date: string | null
         }
         Insert: {
+          city?: string | null
+          country?: string | null
           cover_photo_url?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -190,10 +207,13 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name: string
+          share_enabled?: boolean | null
           share_token?: string
           start_date?: string | null
         }
         Update: {
+          city?: string | null
+          country?: string | null
           cover_photo_url?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -203,6 +223,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name?: string
+          share_enabled?: boolean | null
           share_token?: string
           start_date?: string | null
         }

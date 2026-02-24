@@ -14,11 +14,34 @@ interface NominatimResult {
   display_name: string;
   lat: string;
   lon: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+  };
 }
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function parseCityCountry(result: NominatimResult): { city: string; country: string } {
+  const addr = result.address;
+  if (addr) {
+    const city = addr.city || addr.town || addr.village || addr.county || addr.state || "";
+    const country = addr.country || "";
+    return { city, country };
+  }
+  // Fallback: parse from display_name
+  const parts = result.display_name.split(",").map((s) => s.trim());
+  return {
+    city: parts[0] || "",
+    country: parts[parts.length - 1] || "",
+  };
 }
 
 export default function CreateTripDialog({ open, onOpenChange }: Props) {
@@ -28,6 +51,8 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
   const [form, setForm] = useState({
     name: "",
     destination: "",
+    city: "",
+    country: "",
     lat: "",
     lng: "",
     start_date: "",
@@ -50,7 +75,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5`
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&addressdetails=1`
         );
         const data: NominatimResult[] = await res.json();
         setResults(data);
@@ -66,13 +91,17 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
   }, [searchQuery]);
 
   const handleSelect = (result: NominatimResult) => {
+    const { city, country } = parseCityCountry(result);
+    const displayDest = [city, country].filter(Boolean).join(", ");
     setForm((prev) => ({
       ...prev,
-      destination: result.display_name,
+      destination: displayDest,
+      city,
+      country,
       lat: result.lat,
       lng: result.lon,
     }));
-    setSearchQuery(result.display_name);
+    setSearchQuery(displayDest);
     setPopoverOpen(false);
   };
 
@@ -83,6 +112,8 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       const data = await createTrip.mutateAsync({
         name: form.name,
         destination: form.destination || null,
+        city: form.city || null,
+        country: form.country || null,
         lat: form.lat ? parseFloat(form.lat) : null,
         lng: form.lng ? parseFloat(form.lng) : null,
         start_date: form.start_date || null,
@@ -91,7 +122,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       });
       toast.success("Trip created!");
       onOpenChange(false);
-      setForm({ name: "", destination: "", lat: "", lng: "", start_date: "", end_date: "" });
+      setForm({ name: "", destination: "", city: "", country: "", lat: "", lng: "", start_date: "", end_date: "" });
       setSearchQuery("");
       navigate(`/trip/${data.id}`);
     } catch {
@@ -133,16 +164,20 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
                   )}
                   {results.length > 0 && (
                     <CommandGroup>
-                      {results.map((r, i) => (
-                        <CommandItem
-                          key={`${r.lat}-${r.lon}-${i}`}
-                          onSelect={() => handleSelect(r)}
-                          className="cursor-pointer"
-                        >
-                          <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{r.display_name}</span>
-                        </CommandItem>
-                      ))}
+                      {results.map((r, i) => {
+                        const { city, country } = parseCityCountry(r);
+                        const label = [city, country].filter(Boolean).join(", ") || r.display_name;
+                        return (
+                          <CommandItem
+                            key={`${r.lat}-${r.lon}-${i}`}
+                            onSelect={() => handleSelect(r)}
+                            className="cursor-pointer"
+                          >
+                            <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{label}</span>
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
                   )}
                 </CommandList>

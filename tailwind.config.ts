@@ -13,6 +13,8 @@ export default {
     extend: {
       fontFamily: {
         georgia: ["Playfair Display", "Georgia", "Times New Roman", "serif"],
+        cinzel: ["Cinzel", "Georgia", "serif"],
+        treasure: ["IM Fell English", "Georgia", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -72,10 +74,15 @@ export default {
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(34 65% 48% / 0.4)" },
+          "50%": { boxShadow: "0 0 0 6px hsl(34 65% 48% / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Trash, PencilSimple, Plus } from "@phosphor-icons/react";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Trash, PencilSimple, Plus, AirplaneTakeoff } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useArrivals, useCreateArrival, useDeleteArrival, useUpdateArrival, type Arrival } from "@/hooks/useTrips";
 import { toast } from "sonner";
 
@@ -19,14 +19,14 @@ export default function ArrivalTracker({ tripId }: Props) {
   const createArrival = useCreateArrival();
   const deleteArrival = useDeleteArrival();
   const updateArrival = useUpdateArrival();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const openAdd = () => {
     setEditingId(null);
     setForm(emptyForm);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const openEdit = (a: Arrival) => {
@@ -37,7 +37,7 @@ export default function ArrivalTracker({ tripId }: Props) {
       arrival_datetime: a.arrival_datetime ? a.arrival_datetime.slice(0, 16) : "",
       notes: a.notes || "",
     });
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,7 +62,7 @@ export default function ArrivalTracker({ tripId }: Props) {
         });
         toast.success("Arrival added");
       }
-      setDialogOpen(false);
+      setSheetOpen(false);
       setForm(emptyForm);
       setEditingId(null);
     } catch {
@@ -89,53 +89,65 @@ export default function ArrivalTracker({ tripId }: Props) {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          ))}
+        </div>
       ) : arrivals.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">No arrivals tracked yet</p>
+        <div className="py-12 flex flex-col items-center text-center parchment-bg rounded-xl border border-amber/20">
+          <AirplaneTakeoff size={40} weight="duotone" className="text-amber mb-3 opacity-60" />
+          <p className="text-sm text-muted-foreground italic font-georgia">No arrivals added yet</p>
+        </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Person</TableHead>
-                <TableHead>Flight</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {arrivals.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.person_name || "—"}</TableCell>
-                  <TableCell>{a.flight_number || "—"}</TableCell>
-                  <TableCell className="text-xs">
-                    {a.arrival_datetime ? format(new Date(a.arrival_datetime), "MMM d, h:mm a") : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{a.notes || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <button onClick={() => openEdit(a)} className="text-amber hover:text-amber/80">
-                        <PencilSimple size={16} weight="duotone" />
-                      </button>
-                      <button onClick={() => handleDelete(a.id)} className="text-destructive hover:text-destructive/80">
-                        <Trash size={16} weight="duotone" />
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-2">
+          {arrivals.map((a, i) => (
+            <div
+              key={a.id}
+              className="flex items-start gap-3 p-3 bg-card rounded-lg border cursor-pointer hover:bg-accent/30 transition-colors animate-fade-in-up"
+              style={{ animationDelay: `${i * 80}ms` }}
+              onClick={() => openEdit(a)}
+            >
+              <div className="flex-shrink-0 mt-0.5">
+                <AirplaneTakeoff size={22} weight="duotone" className="text-amber" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-georgia font-bold text-ink text-sm">
+                  {a.person_name || "Unknown"}
+                </p>
+                {a.flight_number && (
+                  <p className="text-xs font-mono text-muted-foreground mt-0.5">
+                    {a.flight_number}
+                  </p>
+                )}
+                {a.arrival_datetime && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(new Date(a.arrival_datetime), "h:mm a · MMM d")}
+                  </p>
+                )}
+                {a.notes && (
+                  <p className="text-xs text-muted-foreground italic mt-1 truncate">
+                    {a.notes}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(a.id); }}
+                className="text-destructive hover:text-destructive/80 p-1"
+              >
+                <Trash size={16} weight="duotone" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card">
-          <DialogHeader>
-            <DialogTitle className="font-georgia">{editingId ? "Edit Arrival" : "Add Arrival"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-3">
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="bg-card">
+          <SheetHeader>
+            <SheetTitle className="font-georgia">{editingId ? "Edit Arrival" : "Add Arrival"}</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleSubmit} className="space-y-3 mt-4">
             <Input placeholder="Person name" value={form.person_name} onChange={(e) => setForm({ ...form, person_name: e.target.value })} />
             <Input placeholder="Flight number" value={form.flight_number} onChange={(e) => setForm({ ...form, flight_number: e.target.value })} />
             <Input type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
@@ -144,8 +156,8 @@ export default function ArrivalTracker({ tripId }: Props) {
               {editingId ? "Save Changes" : "Add Arrival"}
             </Button>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

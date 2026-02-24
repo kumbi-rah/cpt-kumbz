@@ -4,6 +4,7 @@ import { OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { Trip } from "@/hooks/useTrips";
 import { formatDestination } from "@/lib/formatDestination";
+import { getTripStatus, type TripStatus } from "@/lib/tripStatus";
 
 function latLngToPos(lat: number, lng: number, r = 1.03): [number, number, number] {
   const phi = ((90 - lat) * Math.PI) / 180;
@@ -34,20 +35,33 @@ function GlobeMesh() {
   );
 }
 
-function Pin({ trip, isUpcoming, onClick }: { trip: Trip; isUpcoming: boolean; onClick: () => void }) {
+function Pin({ trip, status, onClick }: { trip: Trip; status: TripStatus; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
   const pos = latLngToPos(trip.lat!, trip.lng!);
-  const color = isUpcoming ? "#C8832A" : "#4A7A82";
+  const color = status === "past" ? "#4A7A82" : "#C8832A";
   const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (meshRef.current) {
       meshRef.current.scale.setScalar(hovered ? 1.4 : 1);
+    }
+    // Pulse animation for active pins
+    if (glowRef.current && status === "active") {
+      const s = 1 + Math.sin(clock.getElapsedTime() * 3) * 0.4;
+      glowRef.current.scale.setScalar(s);
     }
   });
 
   return (
     <group position={pos}>
+      {/* Pulse glow ring for active */}
+      {status === "active" && (
+        <mesh ref={glowRef}>
+          <sphereGeometry args={[0.04, 16, 16]} />
+          <meshStandardMaterial color="#C8832A" transparent opacity={0.25} />
+        </mesh>
+      )}
       <mesh
         ref={meshRef}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
@@ -75,8 +89,6 @@ interface GlobeSceneProps {
 }
 
 export default function GlobeScene({ trips, onTripClick }: GlobeSceneProps) {
-  const now = new Date();
-
   return (
     <Canvas camera={{ position: [0, 0, 2.8], fov: 45 }} style={{ background: "transparent" }}>
       <ambientLight intensity={0.5} />
@@ -87,12 +99,12 @@ export default function GlobeScene({ trips, onTripClick }: GlobeSceneProps) {
         {trips
           .filter((t) => t.lat != null && t.lng != null)
           .map((trip) => {
-            const isUpcoming = trip.start_date ? new Date(trip.start_date) > now : false;
+            const status = getTripStatus(trip.start_date, trip.end_date);
             return (
               <Pin
                 key={trip.id}
                 trip={trip}
-                isUpcoming={isUpcoming}
+                status={status}
                 onClick={() => onTripClick(trip.id)}
               />
             );

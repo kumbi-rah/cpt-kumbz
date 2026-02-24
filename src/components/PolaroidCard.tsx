@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import type { Trip } from "@/hooks/useTrips";
 import { formatDestination } from "@/lib/formatDestination";
+import { getTripStatus, STATUS_LABELS } from "@/lib/tripStatus";
 
 interface Props {
   trip: Trip;
@@ -8,7 +9,14 @@ interface Props {
 }
 
 export default function PolaroidCard({ trip, onClick }: Props) {
-  const isUpcoming = trip.start_date ? new Date(trip.start_date) > new Date() : false;
+  const status = getTripStatus(trip.start_date, trip.end_date);
+
+  const badgeClass =
+    status === "active"
+      ? "bg-amber animate-pulse-glow"
+      : status === "upcoming"
+      ? "bg-amber"
+      : "bg-teal";
 
   return (
     <div className="relative w-52 h-72 md:w-full md:h-80 cursor-pointer group flex-shrink-0" onClick={onClick}>
@@ -34,6 +42,7 @@ export default function PolaroidCard({ trip, onClick }: Props) {
               src={trip.cover_photo_url}
               alt={trip.name}
               className="w-full h-full object-cover vintage-filter"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full parchment-bg flex items-center justify-center">
@@ -46,11 +55,9 @@ export default function PolaroidCard({ trip, onClick }: Props) {
 
           {/* Status badge */}
           <div
-            className={`absolute top-2 right-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-sm text-white ${
-              isUpcoming ? "bg-amber" : "bg-teal"
-            }`}
+            className={`absolute top-2 right-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-sm text-white ${badgeClass}`}
           >
-            {isUpcoming ? "Upcoming" : "Past"}
+            {STATUS_LABELS[status]}
           </div>
         </div>
 

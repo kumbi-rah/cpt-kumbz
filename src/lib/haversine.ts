@@ -28,9 +28,13 @@ export function totalMiles(trips: { lat: number | null; lng: number | null; end_
   return Math.round(total);
 }
 
-export function uniqueCountries(trips: { destination: string | null }[]): number {
+export function uniqueCountries(trips: { country?: string | null; destination?: string | null }[]): number {
   const countries = new Set(
-    trips.map((t) => t.destination?.split(",").pop()?.trim()).filter(Boolean)
+    trips.map((t) => {
+      // Prefer dedicated country column, fall back to parsing destination
+      if (t.country) return t.country.trim();
+      return t.destination?.split(",").pop()?.trim();
+    }).filter(Boolean)
   );
   return countries.size;
 }
