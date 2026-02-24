@@ -48,7 +48,7 @@ export default function Home() {
             <div className="flex items-center gap-2 md:hidden">
               <CompassRose size={28} className="text-amber" />
               <div>
-                <h1 className="font-georgia italic text-3xl text-ink leading-tight">Cpt. Kumbz</h1>
+                <h1 className="font-georgia italic text-3xl text-ink leading-tight">Captain Kumbz</h1>
                 <p className="font-georgia text-sm text-muted-foreground -mt-0.5">Adventures</p>
               </div>
             </div>

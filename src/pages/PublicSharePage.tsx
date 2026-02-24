@@ -69,7 +69,7 @@ export default function PublicSharePage() {
         {/* Branding */}
         <div className="px-5 py-3 flex items-center gap-2 border-b bg-card">
           <CompassRose size={18} className="text-amber" />
-          <span className="font-georgia italic text-sm text-ink">Cpt. Kumbz Adventures</span>
+          <span className="font-georgia italic text-sm text-ink">Captain Kumbz Adventures</span>
         </div>
 
         {/* Trip info */}
