@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, ShareNetwork, Copy, MapPin, Scroll, Bed, Binoculars, Notepad, Camera, Star, Plus, PencilSimple, ListChecks, Flag, Anchor } from "@phosphor-icons/react";
+import { ArrowLeft, Copy, MapPin, Scroll, Binoculars, Notepad, Camera, Star, Plus, PencilSimple, ListChecks, Flag, Anchor, Lock } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTrip, useTripSections } from "@/hooks/useTrips";
+import { useTrip, useTripSections, useCreateSection } from "@/hooks/useTrips";
 import { ALWAYS_PRIVATE_TYPES, SECTION_TYPE_LABELS } from "@/lib/constants";
 import { formatDestination } from "@/lib/formatDestination";
 import { getTripStatus, STATUS_LABELS, STATUS_COLORS } from "@/lib/tripStatus";
@@ -16,10 +16,14 @@ import ShareSettings from "@/components/ShareSettings";
 import SectionEditor from "@/components/SectionEditor";
 import ItineraryView from "@/components/ItineraryView";
 import PackingList from "@/components/PackingList";
+import QuickNotes from "@/components/QuickNotes";
+import SectionTypePicker from "@/components/SectionTypePicker";
 import { toast } from "sonner";
 import type { TripSection } from "@/hooks/useTrips";
 import EditTripDialog from "@/components/EditTripDialog";
 import WaxSeal from "@/components/icons/WaxSeal";
+
+const TripMap = lazy(() => import("@/components/TripMap"));
 
 const SECTION_ICONS: Record<string, any> = {
   itinerary: Scroll,
@@ -36,9 +40,12 @@ export default function TripDetail() {
   const navigate = useNavigate();
   const { data: trip, isLoading } = useTrip(id!);
   const { data: sections = [] } = useTripSections(id!);
+  const createSection = useCreateSection();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<TripSection | null>(null);
   const [editTripOpen, setEditTripOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("sections");
 
   if (isLoading) {
     return (
@@ -73,6 +80,22 @@ export default function TripDetail() {
   const openEditor = (section?: TripSection) => {
     setEditingSection(section || null);
     setEditorOpen(true);
+  };
+
+  const handlePickerSelect = (type: string) => {
+    if (type === "notes") {
+      // Create notes section directly — always private
+      createSection.mutate(
+        { trip_id: id!, type: "notes", title: "Notes", content: null, is_public: false, sort_order: sections.length },
+        { onSuccess: () => toast.success("Notes section added"), onError: () => toast.error("Failed to create section") }
+      );
+    } else {
+      // Open the full editor for other types
+      setEditingSection(null);
+      setEditorOpen(true);
+      // We need to pass the pre-selected type; the SectionEditor already defaults
+      // For now just open editor — user picks type there (it's pre-filtered)
+    }
   };
 
   return (
@@ -137,18 +160,19 @@ export default function TripDetail() {
 
         {/* Content tabs */}
         <div className="px-5 mt-5">
-          <Tabs defaultValue="sections">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full bg-card border">
               <TabsTrigger value="sections" className="flex-1 text-xs">Sections</TabsTrigger>
               <TabsTrigger value="arrivals" className="flex-1 text-xs">The Crew</TabsTrigger>
               <TabsTrigger value="photos" className="flex-1 text-xs">Photos</TabsTrigger>
+              <TabsTrigger value="map" className="flex-1 text-xs">Map</TabsTrigger>
               <TabsTrigger value="share" className="flex-1 text-xs">Share</TabsTrigger>
             </TabsList>
 
             <TabsContent value="sections" className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-georgia font-bold text-ink section-header-line flex-1">Sections</h3>
-                <Button size="sm" variant="outline" onClick={() => openEditor()} className="gap-1 ml-3">
+                <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)} className="gap-1 ml-3">
                   <Plus size={14} weight="bold" /> Add
                 </Button>
               </div>
@@ -180,6 +204,21 @@ export default function TripDetail() {
                           </button>
                         </div>
                         <PackingList section={s} />
+                      </div>
+                    );
+                  }
+
+                  if (s.type === "notes") {
+                    return (
+                      <div key={s.id}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Scroll size={20} weight="duotone" className="text-amber flex-shrink-0" />
+                          <p className="text-sm font-medium text-ink">{s.title || "Notes"}</p>
+                          <Badge variant="secondary" className="text-[9px] bg-muted/50 text-muted-foreground gap-0.5">
+                            <Lock size={8} weight="fill" /> Private
+                          </Badge>
+                        </div>
+                        <QuickNotes section={s} />
                       </div>
                     );
                   }
@@ -218,6 +257,14 @@ export default function TripDetail() {
               <PhotoGallery tripId={id!} />
             </TabsContent>
 
+            <TabsContent value="map" className="mt-4">
+              {activeTab === "map" && (
+                <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-lg" />}>
+                  <TripMap trip={trip} onEditTrip={() => setEditTripOpen(true)} />
+                </Suspense>
+              )}
+            </TabsContent>
+
             <TabsContent value="share" className="mt-4">
               <ShareSettings tripId={id!} />
             </TabsContent>
@@ -229,6 +276,12 @@ export default function TripDetail() {
           open={editorOpen}
           onOpenChange={setEditorOpen}
           editSection={editingSection}
+        />
+        <SectionTypePicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          existingSections={sections}
+          onSelect={handlePickerSelect}
         />
         {trip && <EditTripDialog open={editTripOpen} onOpenChange={setEditTripOpen} trip={trip} />}
       </div>
