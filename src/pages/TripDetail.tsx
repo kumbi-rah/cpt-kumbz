@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, ShareNetwork, Copy, MapPin, CalendarBlank, ListChecks, Bed, AirplaneTakeoff, Notepad, Camera, Star, Plus, PencilSimple } from "@phosphor-icons/react";
+import { ArrowLeft, ShareNetwork, Copy, MapPin, Scroll, Bed, Binoculars, Notepad, Camera, Star, Plus, PencilSimple, ListChecks, Flag, Anchor } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,14 +19,15 @@ import PackingList from "@/components/PackingList";
 import { toast } from "sonner";
 import type { TripSection } from "@/hooks/useTrips";
 import EditTripDialog from "@/components/EditTripDialog";
+import WaxSeal from "@/components/icons/WaxSeal";
 
 const SECTION_ICONS: Record<string, any> = {
-  itinerary: CalendarBlank,
+  itinerary: Scroll,
   recommendations: Star,
   packing_list: ListChecks,
-  lodging: Bed,
-  arrivals: AirplaneTakeoff,
-  notes: Notepad,
+  lodging: Anchor,
+  arrivals: Binoculars,
+  notes: Scroll,
   photos: Camera,
 };
 
@@ -75,7 +76,7 @@ export default function TripDetail() {
   };
 
   return (
-    <div className="min-h-screen pb-nav">
+    <div className="min-h-screen pb-nav animate-scroll-unfold">
       <div className="max-w-4xl mx-auto">
         {/* Hero */}
         <div className="relative h-52 md:h-72 overflow-hidden">
@@ -124,7 +125,7 @@ export default function TripDetail() {
             {/* Share bar */}
             {showShareBar && (
               <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-                <ShareNetwork size={16} weight="duotone" className="text-amber" />
+                <WaxSeal size={18} className="text-amber flex-shrink-0" />
                 <p className="text-xs text-muted-foreground truncate flex-1">{shareUrl}</p>
                 <Button size="sm" variant="outline" onClick={copyShareLink} className="gap-1 text-xs h-7">
                   <Copy size={12} /> Copy
@@ -139,15 +140,15 @@ export default function TripDetail() {
           <Tabs defaultValue="sections">
             <TabsList className="w-full bg-card border">
               <TabsTrigger value="sections" className="flex-1 text-xs">Sections</TabsTrigger>
-              <TabsTrigger value="arrivals" className="flex-1 text-xs">Arrivals</TabsTrigger>
+              <TabsTrigger value="arrivals" className="flex-1 text-xs">The Crew</TabsTrigger>
               <TabsTrigger value="photos" className="flex-1 text-xs">Photos</TabsTrigger>
               <TabsTrigger value="share" className="flex-1 text-xs">Share</TabsTrigger>
             </TabsList>
 
             <TabsContent value="sections" className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-georgia font-bold text-ink">Sections</h3>
-                <Button size="sm" variant="outline" onClick={() => openEditor()} className="gap-1">
+                <h3 className="font-georgia font-bold text-ink section-header-line flex-1">Sections</h3>
+                <Button size="sm" variant="outline" onClick={() => openEditor()} className="gap-1 ml-3">
                   <Plus size={14} weight="bold" /> Add
                 </Button>
               </div>
@@ -155,7 +156,6 @@ export default function TripDetail() {
                 <p className="text-sm text-muted-foreground italic">No sections yet — add one above</p>
               ) : (
                 sections.map((s) => {
-                  // Render itinerary sections with treasure map view
                   if (s.type === "itinerary") {
                     return (
                       <div key={s.id} className="cursor-pointer" onClick={() => openEditor(s)}>
@@ -164,7 +164,6 @@ export default function TripDetail() {
                     );
                   }
 
-                  // Render packing list with interactive checkboxes
                   if (s.type === "packing_list") {
                     return (
                       <div key={s.id} className="bg-card rounded-lg border p-4">
@@ -203,7 +202,7 @@ export default function TripDetail() {
                         )}
                       </div>
                       <Badge variant={isPrivate ? "secondary" : "outline"} className={`text-[9px] ${isPrivate ? "bg-muted/50 text-muted-foreground" : "border-teal text-teal"}`}>
-                        {isPrivate ? "Private" : "Public"}
+                        {isPrivate ? "Private" : <><Flag size={10} weight="fill" className="inline mr-0.5" />Public</>}
                       </Badge>
                     </div>
                   );

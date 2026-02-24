@@ -1,5 +1,6 @@
 import { useItineraryItems, useToggleItineraryCompleted, type TripSection } from "@/hooks/useTrips";
 import { toast } from "sonner";
+import { toRoman } from "@/lib/romanNumerals";
 
 interface Props {
   section: TripSection;
@@ -17,12 +18,10 @@ export default function ItineraryView({ section, tripId }: Props) {
     );
   };
 
-  // Group items by day_number
   const days = [...new Set(items.map((it) => it.day_number))].sort((a, b) => a - b);
 
   return (
     <div className="parchment-bg weathered-edges rounded-xl p-6 relative overflow-hidden">
-      {/* Grain overlay */}
       <div className="grain-overlay rounded-xl" />
 
       <h3
@@ -42,13 +41,13 @@ export default function ItineraryView({ section, tripId }: Props) {
             const dayItems = items.filter((it) => it.day_number === day);
             return (
               <div key={day}>
-                {/* Day header — cartographic label */}
+                {/* Day header — Roman numerals */}
                 <div className="mb-3">
                   <h4
-                    className="font-cinzel text-sm font-bold uppercase tracking-[0.25em]"
+                    className="font-cinzel text-sm font-bold uppercase tracking-[0.25em] section-header-line"
                     style={{ color: "#5A4A2E" }}
                   >
-                    — Day {day} —
+                    Day {toRoman(day)}
                   </h4>
                   <div
                     className="h-px mt-1"
@@ -58,7 +57,6 @@ export default function ItineraryView({ section, tripId }: Props) {
 
                 {/* Items with SVG trail */}
                 <div className="relative pl-8">
-                  {/* SVG dashed trail line */}
                   {dayItems.length > 1 && (
                     <svg
                       className="absolute left-[11px] top-[12px] z-0"
@@ -81,7 +79,6 @@ export default function ItineraryView({ section, tripId }: Props) {
                       const isCompleted = !!item.completed;
                       return (
                         <li key={item.id} className="flex items-start gap-3">
-                          {/* Marker — ✕ or ✓ */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleToggle(item.id, isCompleted); }}
                             className="flex-shrink-0 font-bold text-xl leading-none select-none transition-all duration-200"

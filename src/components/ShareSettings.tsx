@@ -31,7 +31,7 @@ export default function ShareSettings({ tripId }: Props) {
 
   return (
     <div>
-      <h3 className="font-georgia font-bold text-ink mb-3">Share Settings</h3>
+      <h3 className="font-georgia font-bold text-ink mb-3 section-header-line">Share Settings</h3>
 
       {/* Master toggle */}
       <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-card border mb-4">

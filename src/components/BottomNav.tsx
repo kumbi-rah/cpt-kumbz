@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { House, Plus, GlobeHemisphereWest, SignOut } from "@phosphor-icons/react";
+import { Anchor, SteeringWheel, SignOut } from "@phosphor-icons/react";
 import { useAuth } from "@/contexts/AuthContext";
+import CompassRose from "@/components/icons/CompassRose";
 
 interface Props {
   onCreateClick?: () => void;
@@ -21,17 +22,17 @@ export default function BottomNav({ onCreateClick }: Props) {
           onClick={() => navigate("/")}
           className={`flex flex-col items-center gap-0.5 transition-colors ${isHome ? "text-amber" : "text-muted"}`}
         >
-          <House size={24} weight="duotone" />
+          <CompassRose size={24} />
           <span className="text-[10px] font-medium">Home</span>
         </button>
 
-        {/* Center floating + button */}
+        {/* Center floating anchor button */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-5">
           <button
             onClick={onCreateClick}
             className="w-14 h-14 rounded-full bg-amber text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
           >
-            <Plus size={28} weight="bold" />
+            <Anchor size={28} weight="bold" />
           </button>
         </div>
 
@@ -43,7 +44,7 @@ export default function BottomNav({ onCreateClick }: Props) {
           onClick={() => navigate("/globe")}
           className={`flex flex-col items-center gap-0.5 transition-colors ${isGlobe ? "text-teal" : "text-muted"}`}
         >
-          <GlobeHemisphereWest size={24} weight="duotone" />
+          <SteeringWheel size={24} weight="duotone" />
           <span className="text-[10px] font-medium">Globe</span>
         </button>
 

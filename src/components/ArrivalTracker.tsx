@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Trash, PencilSimple, Plus, AirplaneTakeoff } from "@phosphor-icons/react";
+import { Trash, PencilSimple, Plus, Anchor } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,7 +51,7 @@ export default function ArrivalTracker({ tripId }: Props) {
           arrival_datetime: form.arrival_datetime || null,
           notes: form.notes || null,
         });
-        toast.success("Arrival updated");
+        toast.success("Crew member updated");
       } else {
         await createArrival.mutateAsync({
           trip_id: tripId,
@@ -60,20 +60,20 @@ export default function ArrivalTracker({ tripId }: Props) {
           arrival_datetime: form.arrival_datetime || null,
           notes: form.notes || null,
         });
-        toast.success("Arrival added");
+        toast.success("Crew member added");
       }
       setSheetOpen(false);
       setForm(emptyForm);
       setEditingId(null);
     } catch {
-      toast.error("Failed to save arrival");
+      toast.error("Failed to save");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteArrival.mutateAsync(id);
-      toast.success("Arrival removed");
+      toast.success("Crew member removed");
     } catch {
       toast.error("Failed to remove");
     }
@@ -82,8 +82,8 @@ export default function ArrivalTracker({ tripId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-georgia font-bold text-ink">Arrivals</h3>
-        <Button size="sm" variant="outline" onClick={openAdd} className="gap-1">
+        <h3 className="font-georgia font-bold text-ink section-header-line flex-1">The Crew</h3>
+        <Button size="sm" variant="outline" onClick={openAdd} className="gap-1 ml-3">
           <Plus size={14} weight="bold" /> Add
         </Button>
       </div>
@@ -95,9 +95,10 @@ export default function ArrivalTracker({ tripId }: Props) {
           ))}
         </div>
       ) : arrivals.length === 0 ? (
-        <div className="py-12 flex flex-col items-center text-center parchment-bg rounded-xl border border-amber/20">
-          <AirplaneTakeoff size={40} weight="duotone" className="text-amber mb-3 opacity-60" />
-          <p className="text-sm text-muted-foreground italic font-georgia">No arrivals added yet</p>
+        <div className="py-12 flex flex-col items-center text-center parchment-bg rounded-xl border border-amber/20 relative overflow-hidden">
+          <div className="grain-overlay rounded-xl" />
+          <Anchor size={40} weight="duotone" className="text-amber mb-3 opacity-40 relative z-10" />
+          <p className="text-sm text-muted-foreground italic font-treasure relative z-10">No crew members yet — who's joining the voyage?</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -109,7 +110,7 @@ export default function ArrivalTracker({ tripId }: Props) {
               onClick={() => openEdit(a)}
             >
               <div className="flex-shrink-0 mt-0.5">
-                <AirplaneTakeoff size={22} weight="duotone" className="text-amber" />
+                <Anchor size={22} weight="duotone" className="text-amber" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-georgia font-bold text-ink text-sm">
@@ -145,7 +146,7 @@ export default function ArrivalTracker({ tripId }: Props) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="bg-card">
           <SheetHeader>
-            <SheetTitle className="font-georgia">{editingId ? "Edit Arrival" : "Add Arrival"}</SheetTitle>
+            <SheetTitle className="font-georgia">{editingId ? "Edit Crew Member" : "Add Crew Member"}</SheetTitle>
           </SheetHeader>
           <form onSubmit={handleSubmit} className="space-y-3 mt-4">
             <Input placeholder="Person name" value={form.person_name} onChange={(e) => setForm({ ...form, person_name: e.target.value })} />
@@ -153,7 +154,7 @@ export default function ArrivalTracker({ tripId }: Props) {
             <Input type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
             <Input placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             <Button type="submit" className="w-full bg-amber hover:bg-amber/90 text-white">
-              {editingId ? "Save Changes" : "Add Arrival"}
+              {editingId ? "Save Changes" : "Add Crew Member"}
             </Button>
           </form>
         </SheetContent>

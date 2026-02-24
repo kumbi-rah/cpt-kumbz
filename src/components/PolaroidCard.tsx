@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import type { Trip } from "@/hooks/useTrips";
 import { formatDestination } from "@/lib/formatDestination";
 import { getTripStatus, STATUS_LABELS } from "@/lib/tripStatus";
+import WaxSeal from "@/components/icons/WaxSeal";
 
 interface Props {
   trip: Trip;
@@ -58,6 +59,11 @@ export default function PolaroidCard({ trip, onClick }: Props) {
             className={`absolute top-2 right-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-sm text-white ${badgeClass}`}
           >
             {STATUS_LABELS[status]}
+          </div>
+
+          {/* Wax seal */}
+          <div className="absolute bottom-2 right-2">
+            <WaxSeal size={22} className="text-amber" />
           </div>
         </div>
 

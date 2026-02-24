@@ -103,7 +103,7 @@ export default function PhotoGallery({ tripId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-georgia font-bold text-ink">Photos</h3>
+        <h3 className="font-georgia font-bold text-ink section-header-line flex-1">Photos</h3>
         <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()} className="gap-1">
           <Camera size={14} weight="duotone" /> Upload
         </Button>

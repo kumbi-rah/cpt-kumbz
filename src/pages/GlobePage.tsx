@@ -5,6 +5,7 @@ import { useTrips } from "@/hooks/useTrips";
 import { totalMiles, uniqueCountries } from "@/lib/haversine";
 import { getTripStatus } from "@/lib/tripStatus";
 import { useCountUp } from "@/lib/useCountUp";
+import RopeDivider from "@/components/icons/RopeDivider";
 
 export default function GlobePage() {
   const { data: trips = [], isLoading } = useTrips();
@@ -19,7 +20,7 @@ export default function GlobePage() {
   const animMiles = useCountUp(miles);
 
   return (
-    <div className="min-h-screen pb-nav flex flex-col">
+    <div className="min-h-screen pb-nav flex flex-col animate-scroll-unfold">
       <div className="max-w-6xl mx-auto w-full flex flex-col flex-1">
         <header className="px-5 pt-6 pb-2">
           <h1 className="font-georgia text-2xl md:text-4xl font-bold text-ink">Your World</h1>
@@ -36,7 +37,13 @@ export default function GlobePage() {
           )}
         </div>
 
+        {/* Here Be Dragons */}
+        <p className="text-center font-cinzel text-xs italic text-muted-foreground tracking-widest opacity-60 -mt-2 mb-2">
+          Here Be Dragons
+        </p>
+
         <div className="px-5 pb-4">
+          <RopeDivider />
           <div className="flex justify-around bg-card rounded-xl border py-3 md:py-5">
             <div className="text-center">
               <p className="font-georgia text-2xl md:text-3xl font-bold text-amber">{animTrips}</p>
