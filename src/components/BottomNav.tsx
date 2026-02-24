@@ -1,0 +1,50 @@
+import { useLocation, useNavigate } from "react-router-dom";
+import { House, Plus, GlobeHemisphereWest } from "@phosphor-icons/react";
+
+interface Props {
+  onCreateClick?: () => void;
+}
+
+export default function BottomNav({ onCreateClick }: Props) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHome = location.pathname === "/";
+  const isGlobe = location.pathname === "/globe";
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-nav border-t border-border">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
+        {/* Home */}
+        <button
+          onClick={() => navigate("/")}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isHome ? "text-amber" : "text-muted"}`}
+        >
+          <House size={24} weight="duotone" />
+          <span className="text-[10px] font-medium">Home</span>
+        </button>
+
+        {/* Center floating + button */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-5">
+          <button
+            onClick={onCreateClick}
+            className="w-14 h-14 rounded-full bg-amber text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+          >
+            <Plus size={28} weight="bold" />
+          </button>
+        </div>
+
+        {/* Spacer for center */}
+        <div className="w-14" />
+
+        {/* Globe */}
+        <button
+          onClick={() => navigate("/globe")}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isGlobe ? "text-teal" : "text-muted"}`}
+        >
+          <GlobeHemisphereWest size={24} weight="duotone" />
+          <span className="text-[10px] font-medium">Globe</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
