@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import CreateTripDialog from "@/components/CreateTripDialog";
 import Index from "./pages/Index";
+import Trips from "./pages/Trips";
 import TripDetail from "./pages/TripDetail";
 import GlobePage from "./pages/GlobePage";
 import PublicSharePage from "./pages/PublicSharePage";
@@ -38,7 +39,7 @@ function AppLayout() {
   return (
     <div className="flex min-h-screen w-full">
       {user && <SideNav onCreateClick={() => setCreateOpen(true)} />}
-      <main className={`flex-1 ${user ? "md:ml-56" : ""}`}>
+      <main className={`flex-1 ${user ? "md:ml-[200px]" : ""}`}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -48,6 +49,14 @@ function AppLayout() {
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trips"
+            element={
+              <ProtectedRoute>
+                <Trips onCreateClick={() => setCreateOpen(true)} />
               </ProtectedRoute>
             }
           />

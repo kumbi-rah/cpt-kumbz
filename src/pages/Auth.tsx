@@ -58,7 +58,7 @@ export default function Auth() {
         <Anchor size={200} weight="duotone" className="absolute text-amber/10" />
         <div className="relative z-10 text-center">
           <CompassRose size={80} className="text-amber mx-auto mb-6" />
-          <h1 className="font-georgia italic text-5xl text-ink mb-2">Cpt. Kumbz</h1>
+          <h1 className="font-georgia italic text-5xl text-ink mb-2">Captain Kumbz</h1>
           <p className="font-georgia text-lg text-muted-foreground mb-8">Adventures</p>
           <p className="font-treasure text-base text-muted-foreground italic max-w-xs mx-auto leading-relaxed">
             "Every voyage begins with a single step ashore — may yours lead to wonders untold."
@@ -74,7 +74,7 @@ export default function Auth() {
             <div className="inline-flex items-center gap-2 mb-2">
               <CompassRose size={36} className="text-amber" />
             </div>
-            <h1 className="font-georgia italic text-3xl text-ink">Cpt. Kumbz</h1>
+            <h1 className="font-georgia italic text-3xl text-ink">Captain Kumbz</h1>
             <p className="font-georgia text-muted-foreground">Adventures</p>
           </div>
 
