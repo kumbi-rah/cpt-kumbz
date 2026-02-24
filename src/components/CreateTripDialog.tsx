@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { useCreateTrip } from "@/hooks/useTrips";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MapPin } from "lucide-react";
+
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
 
 interface Props {
   open: boolean;
@@ -25,6 +34,48 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
     end_date: "",
   });
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5`
+        );
+        const data: NominatimResult[] = await res.json();
+        setResults(data);
+      } catch {
+        setResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  const handleSelect = (result: NominatimResult) => {
+    setForm((prev) => ({
+      ...prev,
+      destination: result.display_name,
+      lat: result.lat,
+      lng: result.lon,
+    }));
+    setSearchQuery(result.display_name);
+    setPopoverOpen(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !user) return;
@@ -41,6 +92,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       toast.success("Trip created!");
       onOpenChange(false);
       setForm({ name: "", destination: "", lat: "", lng: "", start_date: "", end_date: "" });
+      setSearchQuery("");
       navigate(`/trip/${data.id}`);
     } catch {
       toast.error("Failed to create trip");
@@ -55,11 +107,49 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <Input placeholder="Trip name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <Input placeholder="Destination (e.g. Paris, France)" value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
-          <div className="grid grid-cols-2 gap-2">
-            <Input type="number" step="any" placeholder="Latitude" value={form.lat} onChange={(e) => setForm({ ...form, lat: e.target.value })} />
-            <Input type="number" step="any" placeholder="Longitude" value={form.lng} onChange={(e) => setForm({ ...form, lng: e.target.value })} />
-          </div>
+          
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search destination..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPopoverOpen(true);
+                  }}
+                  onFocus={() => { if (searchQuery.length >= 2) setPopoverOpen(true); }}
+                  className="pl-9"
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)] z-50 bg-popover" align="start" sideOffset={4}>
+              <Command>
+                <CommandList>
+                  {searching && <div className="py-3 text-center text-sm text-muted-foreground">Searching...</div>}
+                  {!searching && results.length === 0 && searchQuery.length >= 2 && (
+                    <CommandEmpty>No locations found.</CommandEmpty>
+                  )}
+                  {results.length > 0 && (
+                    <CommandGroup>
+                      {results.map((r, i) => (
+                        <CommandItem
+                          key={`${r.lat}-${r.lon}-${i}`}
+                          onSelect={() => handleSelect(r)}
+                          className="cursor-pointer"
+                        >
+                          <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{r.display_name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           <div className="grid grid-cols-2 gap-2">
             <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
