@@ -1,111 +1,169 @@
 
 
-## Migrate Itinerary to `itinerary_items` Table + Pirate Treasure Map Styling
+# Pirate / Explorer Iconography Overhaul
 
-### What changes
-
-**Part 1: Data layer -- use `itinerary_items` table instead of JSONB**
-
-The `itinerary_items` table already exists in Supabase with columns: `id`, `trip_id`, `day_number`, `item_time`, `activity`, `description`, `sort_order`, `created_at`. Currently the app stores itinerary data as JSON inside `trip_sections.content`. We'll switch to reading/writing from this dedicated table.
-
-**Part 2: Treasure map visual overhaul**
-
-Replace the current simple parchment styling with a full pirate treasure map aesthetic -- dashed SVG trail lines connecting items, hand-drawn X markers, cartographic Google Font (IM Fell English), deep sepia toning, and weathered edge effects.
-
-**Part 3: UI/UX improvement suggestions** (analysis provided at the end)
+A comprehensive visual theming pass to weave pirate and explorer elements throughout the entire Cpt. Kumbz Adventures app.
 
 ---
 
-### Technical Details
+## 1. New Shared Components and Assets
 
-**File: `index.html`**
-- Add Google Font import for "IM Fell English" (serif, cartographic feel)
+### SVG Components (new files)
+- **`src/components/icons/CompassRose.tsx`** -- Custom SVG compass rose with N/S/E/W in amber and ink, replacing the Phosphor `Compass` icon in the header, auth page, and public share page.
+- **`src/components/icons/WaxSeal.tsx`** -- Small circular SVG with anchor/compass motif, used on polaroid cards and share link bar.
+- **`src/components/icons/RopeDivider.tsx`** -- Horizontal rope/knot SVG used as a decorative divider in multiple spots.
 
-**File: `src/hooks/useTrips.ts`**
-- Define an `ItineraryItem` type manually (since the table isn't in the generated types, we'll use raw Supabase queries with explicit typing):
-  ```
-  { id: string; trip_id: string; day_number: number; item_time: string | null;
-    activity: string; description: string | null; sort_order: number; created_at: string }
-  ```
-- Add `useItineraryItems(tripId)` -- fetches from `itinerary_items` where `trip_id = tripId`, ordered by `day_number`, then `sort_order`
-- Add `useCreateItineraryItem()` -- inserts a row into `itinerary_items`
-- Add `useUpdateItineraryItem()` -- updates a row by id
-- Add `useDeleteItineraryItem()` -- deletes a row by id
-- Add `useBulkUpsertItineraryItems()` -- for saving the entire editor state (delete removed items, upsert current items)
-
-**File: `src/components/SectionEditor.tsx`**
-- When editing an itinerary section, load items from `useItineraryItems(tripId)` instead of parsing `section.content`
-- Editor fields per item: `day_number` (number input), `item_time` (text), `activity` (text), `description` (optional textarea)
-- Group items by day in the editor UI with "Add Day" and "Add Item" buttons
-- On save, bulk upsert items to `itinerary_items` table (delete removed, insert new, update existing)
-- Non-itinerary sections continue using `trip_sections.content` JSONB as before
-
-**File: `src/components/ItineraryView.tsx`** (major rewrite)
-- Fetch items from `useItineraryItems(tripId)` instead of reading `section.content`
-- Group items by `day_number` and render each day as a section
-- Visual overhaul:
-  - Full parchment background with CSS texture (layered radial gradients simulating stains/aging)
-  - Weathered edges using `box-shadow` insets and a torn-paper border effect
-  - Each item marked with a hand-drawn style dark ink X character
-  - SVG dashed vertical line connecting each X to the next (like a dotted trail on a map)
-  - Use "IM Fell English" font for all itinerary text
-  - Sepia color palette: dark brown ink (#3B2F1E), faded amber accents
-  - Day headers styled like map region labels with decorative underlines
-
-**File: `src/pages/TripDetail.tsx`**
-- Pass `tripId` to `ItineraryView` (it currently only receives `section`)
-- Update the click handler for itinerary sections to pass both section and tripId context
-
-**File: `src/pages/PublicSharePage.tsx`**
-- Same update: pass `tripId` to `ItineraryView` for public display
-
-**File: `src/index.css`**
-- Enhanced `.parchment-bg` class with more realistic aged texture
-- New `.treasure-map-text` class using "IM Fell English" font
-- New `.weathered-edges` class for the torn/burned border effect
-- CSS for the dashed trail connector
+### Utility: Roman Numerals
+- **`src/lib/romanNumerals.ts`** -- Helper `toRoman(n: number): string` for converting day numbers (1 -> I, 2 -> II, etc.) used in itinerary day headers.
 
 ---
 
-### Visual Design (Treasure Map Theme)
+## 2. CSS and Tailwind Changes
 
-The itinerary view will look like an old explorer's map with:
-- **Background**: Multi-layered parchment gradient with subtle stain spots (radial gradients)
-- **Edges**: Inset shadows creating a burnt/weathered border appearance
-- **X Markers**: Dark ink X characters (not emoji), styled large and slightly rotated for a hand-drawn feel
-- **Trail Line**: An SVG with a dashed stroke connecting each X vertically, like a dotted path on a treasure map
-- **Typography**: "IM Fell English" Google Font -- an old-style serif that looks hand-set
-- **Day Headers**: Styled like map region labels with small decorative flourishes
-- **Colors**: Deep brown ink (#3B2F1E), warm amber (#B8860B), faded parchment (#F5E6C8)
+### `src/index.css`
+- Change skeleton pulse color from grey (`bg-muted`) to amber-tinted pulse
+- Add `@keyframes scroll-unfold` for page transition (content slides in like a scroll opening)
+- Add `.animate-scroll-unfold` utility class
+- Add `.rope-border` class for a repeating rope pattern border image
+- Add `.section-header-line` style for `-- TITLE --` amber line decoration
 
----
+### `tailwind.config.ts`
+- Add `scroll-unfold` keyframe and animation to the config
 
-### UI/UX Improvement Suggestions
-
-After analyzing the full app, here are best-practice improvements to consider for future iterations:
-
-1. **Loading skeletons instead of italic text** -- Replace "Loading..." text with skeleton placeholder components (shimmer cards, skeleton rows) for a more polished perceived performance
-2. **Toast feedback on all mutations** -- Some actions like "Set as Cover" and section toggles should show success/error toasts consistently
-3. **Confirm dialogs for destructive actions** -- Deleting photos, sections, and arrivals should use an AlertDialog confirmation rather than instant deletion
-4. **Keyboard accessibility** -- Many interactive elements use `<div onClick>` instead of `<button>`. These should be semantic buttons or have `role="button"` + `tabIndex` + `onKeyDown`
-5. **Form validation** -- The Create Trip and Section Editor dialogs lack input validation (e.g., required trip name, date range validation). Add zod schemas with react-hook-form
-6. **Optimistic updates** -- Mutations like toggling section visibility or reordering could use optimistic updates for snappier UX
-7. **Drag-and-drop reordering** -- Itinerary items and sections would benefit from drag-to-reorder rather than manual sort_order
-8. **Dark mode polish** -- The dark mode variables exist but some components (parchment bg, polaroid cards) may not adapt well. Test and adjust
-9. **Image optimization** -- Cover photos are served at full resolution. Consider using Supabase image transforms or `srcSet` for responsive image loading
-10. **Empty state illustrations** -- The globe and trip detail pages could use more engaging empty states with illustrations rather than plain text
+### `src/components/ui/skeleton.tsx`
+- Change default skeleton color from `bg-muted` to an amber-tinted pulse: `bg-amber/20` with amber shimmer
 
 ---
 
-### Summary of files changed
+## 3. Navigation Overhaul
 
-| File | Change |
+### `src/components/SideNav.tsx`
+- Replace `House` icon with inline `CompassRose` SVG (smaller)
+- Replace `GlobeHemisphereWest` with `Anchor` from Phosphor (ship's wheel: `SteeringWheel` from Phosphor)  
+- Replace `Plus` in "New Trip" button with `Anchor` icon
+- Brand logo: swap `Compass` for the new `CompassRose` component
+
+### `src/components/BottomNav.tsx`
+- Same icon swaps as SideNav: compass rose for Home, steering wheel for Globe, anchor for New Trip
+
+---
+
+## 4. Auth Page (Split Layout)
+
+### `src/pages/Auth.tsx`
+- Convert to split layout: left half shows a parchment-toned panel with the compass rose, app title, and a decorative quote ("Every voyage begins with a single step...") 
+- Right half keeps the login card, enlarged
+- Replace `Compass` icon with `CompassRose` component
+- Add subtle jolly roger / anchor watermark behind title at low opacity
+
+---
+
+## 5. Home Dashboard (`src/pages/Index.tsx`)
+
+- Replace `Compass` icon in mobile header with `CompassRose`
+- Add a "Next Adventure" spotlight card above the trip grid showing the nearest upcoming trip with:
+  - Anchor icon prefix: "X days until departure"
+  - Aged parchment corner fold decoration (CSS pseudo-elements)
+- Add `RopeDivider` between the spotlight and the trip cards section
+- Add scroll-unfold entrance animation to main content
+- Section headers get `-- TITLE --` amber decorative line style
+
+---
+
+## 6. Polaroid Cards (`src/components/PolaroidCard.tsx`)
+
+- Add a small wax seal stamp (amber circle with anchor silhouette) in the bottom-right corner of the photo area using the `WaxSeal` component
+- Empty state (in Index.tsx): replace the simple compass empty state with a full parchment illustration showing a "message in a bottle" motif and ocean-toned background
+
+---
+
+## 7. Globe Page
+
+### `src/pages/GlobePage.tsx`
+- Add "Here Be Dragons" text in small italic Cinzel font below the globe
+- Add `RopeDivider` above the stats footer
+
+### `src/components/GlobeScene.tsx`
+- Add dashed route lines (nautical chart style) between pinned trip destinations using `THREE.Line` with a dashed material connecting sequential trip pins
+
+---
+
+## 8. Trip Detail (`src/pages/TripDetail.tsx`)
+
+- Update `SECTION_ICONS` mapping to pirate-themed Phosphor icons:
+  - itinerary -> `Scroll` (or `MapTrifold`)
+  - recommendations -> `Star` (keep, gold star)
+  - packing_list -> `Treasure` (or `Package`)
+  - lodging -> `Anchor`
+  - arrivals -> `Binoculars`
+  - notes -> `Scroll`
+  - photos -> `Camera` (keep)
+- Share link bar: add `WaxSeal` icon next to URL
+- Public badge: replace globe emoji text with `Flag` icon from Phosphor
+- Rename "Arrivals" tab to "The Crew"
+- Section headers get the `-- TITLE --` amber line treatment
+
+---
+
+## 9. Arrivals / "The Crew" (`src/components/ArrivalTracker.tsx`)
+
+- Rename heading from "Arrivals" to "The Crew"
+- Each arrival card: add a small `Anchor` icon next to the person name (replacing `AirplaneTakeoff`)
+- Empty state text: "No crew members yet -- who's joining the voyage?" with anchor icon
+- Sheet title: "Add Crew Member" / "Edit Crew Member"
+
+---
+
+## 10. Itinerary View (`src/components/ItineraryView.tsx`)
+
+- Day headers: convert "Day 1" to "Day I" using Roman numerals via `toRoman()` helper
+- Day headers: use Cinzel font (already present) with amber `-- Day I --` decorative line style
+
+---
+
+## 11. Toast Notifications
+
+### `src/components/ui/sonner.tsx` or toast integration
+- Add a small anchor icon (unicode or inline SVG) as a prefix to toast messages via the Sonner `icon` prop or custom toast styling
+
+---
+
+## 12. Page Transitions
+
+### `src/App.tsx`
+- Wrap route content in an animated container that applies the `animate-scroll-unfold` class on mount for a subtle scroll-opening effect
+
+---
+
+## 13. Typography Accents (global)
+
+- Section headers throughout (`TripDetail`, `ArrivalTracker`, `PhotoGallery`, `ShareSettings`) get the amber decorative line treatment: a reusable `SectionHeader` component or CSS class that renders `-- TITLE --` with thin amber lines on each side
+
+---
+
+## Files Changed Summary
+
+| File | Action |
 |------|--------|
-| `index.html` | Add IM Fell English Google Font |
-| `src/hooks/useTrips.ts` | Add itinerary_items CRUD hooks + type |
-| `src/components/SectionEditor.tsx` | Rewrite itinerary editing to use itinerary_items table, grouped by day |
-| `src/components/ItineraryView.tsx` | Major rewrite: fetch from DB, treasure map styling with SVG trail |
-| `src/pages/TripDetail.tsx` | Pass tripId to ItineraryView |
-| `src/pages/PublicSharePage.tsx` | Pass tripId to ItineraryView |
-| `src/index.css` | Enhanced parchment, weathered edges, treasure map font classes |
+| `src/components/icons/CompassRose.tsx` | Create |
+| `src/components/icons/WaxSeal.tsx` | Create |
+| `src/components/icons/RopeDivider.tsx` | Create |
+| `src/lib/romanNumerals.ts` | Create |
+| `src/index.css` | Modify (new animations, rope border, section header styles, amber skeleton) |
+| `tailwind.config.ts` | Modify (new keyframes) |
+| `src/components/ui/skeleton.tsx` | Modify (amber pulse) |
+| `src/components/SideNav.tsx` | Modify (icon swaps) |
+| `src/components/BottomNav.tsx` | Modify (icon swaps) |
+| `src/pages/Auth.tsx` | Modify (split layout + compass rose) |
+| `src/pages/Index.tsx` | Modify (next adventure card, rope divider, compass rose, empty state) |
+| `src/components/PolaroidCard.tsx` | Modify (wax seal) |
+| `src/pages/GlobePage.tsx` | Modify (Here Be Dragons, rope divider) |
+| `src/components/GlobeScene.tsx` | Modify (route lines between pins) |
+| `src/pages/TripDetail.tsx` | Modify (icons, tab rename, wax seal, section headers) |
+| `src/components/ArrivalTracker.tsx` | Modify (rename, icons, empty state) |
+| `src/components/ItineraryView.tsx` | Modify (Roman numerals, header style) |
+| `src/components/PhotoGallery.tsx` | Modify (section header style) |
+| `src/components/ShareSettings.tsx` | Modify (section header style) |
+| `src/App.tsx` | Modify (page transition wrapper) |
+| `src/components/ui/sonner.tsx` | Modify (anchor icon in toasts) |
 
