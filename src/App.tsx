@@ -13,6 +13,7 @@ import TripDetail from "./pages/TripDetail";
 import GlobePage from "./pages/GlobePage";
 import PublicSharePage from "./pages/PublicSharePage";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ function AppLayout() {
       <main className={`flex-1 ${user ? "md:ml-56" : ""}`}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/share/:shareToken" element={<PublicSharePage />} />
           <Route
             path="/"

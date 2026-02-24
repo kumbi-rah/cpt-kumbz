@@ -10,7 +10,7 @@ import { toast } from "sonner";
 export default function Auth() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,6 +18,21 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (mode === "forgot") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setLoading(false);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Check your email for a password reset link!");
+        setMode("login");
+      }
+      return;
+    }
+
     const fn = mode === "login" ? signIn : signUp;
     const { error } = await fn(email, password);
     setLoading(false);
@@ -46,13 +61,26 @@ export default function Auth() {
 
         <div className="bg-card rounded-xl border p-6 shadow-sm">
           <h2 className="font-georgia text-lg font-bold text-ink mb-4">
-            {mode === "login" ? "Welcome Back" : "Join the Adventure"}
+            {mode === "login" ? "Welcome Back" : mode === "signup" ? "Join the Adventure" : "Reset Password"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            {mode !== "forgot" && (
+              <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            )}
+            {mode === "login" && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="text-xs text-amber hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             <Button type="submit" className="w-full bg-amber hover:bg-amber/90 text-white" disabled={loading}>
-              {loading ? "..." : mode === "login" ? "Sign In" : "Sign Up"}
+              {loading ? "..." : mode === "login" ? "Sign In" : mode === "signup" ? "Sign Up" : "Send Reset Link"}
             </Button>
           </form>
 
@@ -78,14 +106,26 @@ export default function Auth() {
             Continue with Google
           </Button>
           <p className="text-xs text-muted-foreground text-center mt-4">
-            {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
-              className="text-amber font-medium hover:underline"
-            >
-              {mode === "login" ? "Sign up" : "Sign in"}
-            </button>
+            {mode === "forgot" ? (
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className="text-amber font-medium hover:underline"
+              >
+                Back to sign in
+              </button>
+            ) : (
+              <>
+                {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="text-amber font-medium hover:underline"
+                >
+                  {mode === "login" ? "Sign up" : "Sign in"}
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>
