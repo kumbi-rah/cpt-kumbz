@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { House, Plus, GlobeHemisphereWest } from "@phosphor-icons/react";
+import { House, Plus, GlobeHemisphereWest, SignOut } from "@phosphor-icons/react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   onCreateClick?: () => void;
@@ -8,6 +9,7 @@ interface Props {
 export default function BottomNav({ onCreateClick }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const isHome = location.pathname === "/";
   const isGlobe = location.pathname === "/globe";
 
@@ -43,6 +45,15 @@ export default function BottomNav({ onCreateClick }: Props) {
         >
           <GlobeHemisphereWest size={24} weight="duotone" />
           <span className="text-[10px] font-medium">Globe</span>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => signOut()}
+          className="flex flex-col items-center gap-0.5 transition-colors text-muted"
+        >
+          <SignOut size={24} weight="duotone" />
+          <span className="text-[10px] font-medium">Logout</span>
         </button>
       </div>
     </nav>
