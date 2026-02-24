@@ -159,9 +159,34 @@ function Pin({ trip, status, onClick }: { trip: Trip; status: TripStatus; onClic
       </mesh>
       {hovered && (
         <Html distanceFactor={3} style={{ pointerEvents: "none" }}>
-          <div className="bg-card px-2.5 py-1.5 rounded-lg shadow-lg text-xs font-georgia text-ink whitespace-nowrap border">
-            <p className="font-bold">{trip.name}</p>
-            {trip.destination && <p className="text-[10px] text-muted-foreground">{formatDestination(trip.destination)}</p>}
+          <div
+            className="whitespace-nowrap animate-fade-in"
+            style={{
+              background: "#FAF7F2",
+              border: "1px solid rgba(200,131,42,0.3)",
+              borderRadius: 10,
+              padding: "10px 14px",
+              boxShadow: "0 4px 16px rgba(80,60,30,0.2)",
+              pointerEvents: "none",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+              <p className="font-georgia font-bold text-[13px]" style={{ color: "#2A2218" }}>{trip.name}</p>
+            </div>
+            {trip.destination && <p className="text-[11px]" style={{ color: "#5A4F3E" }}>{formatDestination(trip.destination)}</p>}
+            {trip.start_date && (
+              <p className="text-[11px] mt-0.5" style={{ color: "#9A8F7E" }}>
+                {new Date(trip.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+              </p>
+            )}
+            <span
+              className="inline-block mt-1 text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white"
+              style={{ background: status === "past" ? "#4A7A82" : "#C8832A", letterSpacing: 0.5 }}
+            >
+              {status === "upcoming" ? "UPCOMING" : status === "active" ? "ACTIVE" : "PAST"}
+            </span>
           </div>
         </Html>
       )}
