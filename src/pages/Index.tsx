@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "@phosphor-icons/react";
+import { Compass, SignOut } from "@phosphor-icons/react";
 import PolaroidCard from "@/components/PolaroidCard";
 import { useTrips } from "@/hooks/useTrips";
 import { useAuth } from "@/contexts/AuthContext";
 import { totalMiles, uniqueCountries } from "@/lib/haversine";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: trips = [], isLoading } = useTrips();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
@@ -24,12 +24,17 @@ export default function Home() {
     <div className="min-h-screen pb-nav">
       {/* Header */}
       <header className="px-5 pt-8 pb-4">
-        <div className="flex items-center gap-2">
-          <Compass size={28} weight="duotone" className="text-amber" />
-          <div>
-            <h1 className="font-georgia italic text-2xl text-ink leading-tight">Cpt. Kumbz</h1>
-            <p className="font-georgia text-sm text-muted-foreground -mt-0.5">Adventures</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Compass size={28} weight="duotone" className="text-amber" />
+            <div>
+              <h1 className="font-georgia italic text-2xl text-ink leading-tight">Cpt. Kumbz</h1>
+              <p className="font-georgia text-sm text-muted-foreground -mt-0.5">Adventures</p>
+            </div>
           </div>
+          <button onClick={() => signOut()} className="p-2 rounded-md text-muted-foreground hover:text-ink hover:bg-accent transition-colors">
+            <SignOut size={22} weight="duotone" />
+          </button>
         </div>
       </header>
 
