@@ -173,32 +173,39 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
         }
       });
 
-    // Create arcs between sequential trips (route lines)
-    const sortedTrips = [...validTrips].sort(
-      (a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime(),
-    );
+    // Create round-trip arcs from home to each trip
+    const arcsData: { startLat: number; startLng: number; endLat: number; endLng: number; color: string }[] = [];
 
-    const arcsData = [];
-    for (let i = 0; i < sortedTrips.length - 1; i++) {
-      const from = sortedTrips[i];
-      const to = sortedTrips[i + 1];
-      if (from.lat && from.lng && to.lat && to.lng) {
+    if (homeLocation) {
+      for (const trip of validTrips) {
+        const status = getTripStatus(trip.start_date, trip.end_date);
+        const color = status === "past" ? "rgba(74,122,130,0.6)" : "rgba(200,131,42,0.6)";
+        // Outbound arc
         arcsData.push({
-          startLat: from.lat,
-          startLng: from.lng,
-          endLat: to.lat,
-          endLng: to.lng,
+          startLat: homeLocation.lat,
+          startLng: homeLocation.lng,
+          endLat: trip.lat!,
+          endLng: trip.lng!,
+          color,
+        });
+        // Return arc (slightly different altitude handled by globe)
+        arcsData.push({
+          startLat: trip.lat!,
+          startLng: trip.lng!,
+          endLat: homeLocation.lat,
+          endLng: homeLocation.lng,
+          color,
         });
       }
     }
 
     globeRef.current
       .arcsData(arcsData)
-      .arcColor(() => "rgba(200,131,42,0.6)")
+      .arcColor((d: any) => d.color)
       .arcDashLength(0.4)
       .arcDashGap(0.2)
-      .arcDashAnimateTime(0)
-      .arcStroke(0.8) // Thicker arcs for visibility
+      .arcDashAnimateTime(1500)
+      .arcStroke(0.8)
       .arcAltitude(0.1);
   }, [trips, onTripClick, homeLocation]);
 
