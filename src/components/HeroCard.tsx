@@ -16,12 +16,12 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
 
   if (!trip) {
     return (
-      <div className="relative w-full h-[240px] md:h-[340px] rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #C8A96E, #8B6914)" }}>
+      <div className="relative w-full h-[260px] md:h-[360px] rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #C8A96E, #8B6914)" }}>
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.06]">
           <CompassRose size={200} className="text-foreground" />
         </div>
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
-          <p className="font-georgia italic text-2xl text-primary-foreground mb-4">No voyages ahead, Captain</p>
+          <p className="font-georgia italic text-2xl md:text-3xl text-primary-foreground mb-4">No voyages ahead, Captain</p>
           <button
             onClick={onCreateClick}
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-georgia text-base hover:bg-primary/90 transition-colors"
@@ -57,7 +57,7 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
 
   return (
     <div
-      className="relative w-full h-[240px] md:h-[340px] rounded-2xl overflow-hidden cursor-pointer group"
+      className="relative w-full h-[260px] md:h-[360px] rounded-2xl overflow-hidden cursor-pointer group"
       onClick={() => navigate(`/trip/${trip.id}`)}
     >
       {/* Background */}
@@ -79,25 +79,25 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
         </>
       )}
 
-      {/* Bottom gradient overlay */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(42,34,24,0.82) 0%, rgba(42,34,24,0.4) 45%, transparent 65%)" }} />
+      {/* Bottom gradient overlay - stronger for better text readability */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(42,34,24,0.88) 0%, rgba(42,34,24,0.5) 45%, transparent 65%)" }} />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8 z-10">
-        <p className="font-cinzel text-[10px] md:text-[11px] uppercase tracking-[3px] text-primary mb-1.5">
+      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 z-10">
+        <p className="font-cinzel text-[10px] md:text-[11px] uppercase tracking-[3px] text-primary mb-2">
           Next Adventure
         </p>
-        <h2 className="font-georgia font-bold text-[22px] md:text-[32px] leading-tight" style={{ color: "#F2EDE4" }}>
+        <h2 className="font-georgia font-bold text-[26px] md:text-[38px] leading-tight" style={{ color: "#F2EDE4" }}>
           {trip.name}
         </h2>
         {trip.destination && (
-          <p className="text-[15px] mt-1" style={{ color: "hsl(36 13% 55%)" }}>
+          <p className="text-[15px] md:text-[16px] mt-2" style={{ color: "hsl(36 13% 60%)" }}>
             {formatDestination(trip.destination)}
           </p>
         )}
         {countdownText && (
           <span
-            className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}
+            className={`inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}
           >
             {countdownText}
           </span>
@@ -105,8 +105,8 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
       </div>
 
       {/* View Trip button */}
-      <div className="absolute bottom-5 right-5 md:bottom-8 md:right-8 z-10">
-        <span className="font-georgia text-sm text-primary-foreground/80 group-hover:text-primary-foreground transition-colors">
+      <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-10">
+        <span className="font-georgia text-sm md:text-base text-primary-foreground/90 group-hover:text-primary-foreground transition-colors drop-shadow-md">
           View Trip →
         </span>
       </div>
