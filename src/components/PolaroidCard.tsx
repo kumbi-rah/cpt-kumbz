@@ -1,19 +1,61 @@
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
 import type { Trip } from "@/hooks/useTrips";
 import { formatDestination } from "@/lib/formatDestination";
 import { getTripStatus, STATUS_LABELS } from "@/lib/tripStatus";
+import { supabase } from "@/integrations/supabase/client";
+import { Users, User } from "@phosphor-icons/react";
 
 interface Props {
   trip: Trip;
   onClick: () => void;
-  /** If true, hides the countdown line below the card */
   hideCountdown?: boolean;
 }
 
+interface CrewMember {
+  user_id: string;
+  avatar_url: string | null;
+  display_name: string;
+}
+
 export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
+  const [crew, setCrew] = useState<CrewMember[]>([]);
+  const [loadingCrew, setLoadingCrew] = useState(true);
+  
   const status = getTripStatus(trip.start_date, trip.end_date);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  useEffect(() => {
+    loadCrew();
+  }, [trip.id]);
+
+  const loadCrew = async () => {
+    setLoadingCrew(true);
+    try {
+      const { data, error } = await supabase
+        .from("trip_crew")
+        .select(`
+          user_id,
+          user_profile:user_profiles!trip_crew_user_id_fkey(avatar_url, display_name)
+        `)
+        .eq("trip_id", trip.id);
+
+      if (error) throw error;
+
+      const crewData = data?.map(item => ({
+        user_id: item.user_id,
+        avatar_url: (item.user_profile as any)?.avatar_url || null,
+        display_name: (item.user_profile as any)?.display_name || 'Unknown',
+      })) || [];
+
+      setCrew(crewData);
+    } catch (error) {
+      console.error("Error loading crew:", error);
+    } finally {
+      setLoadingCrew(false);
+    }
+  };
 
   // Countdown calculations
   let countdownText = "";
@@ -43,6 +85,8 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
     countdownClass = "text-secondary";
   }
 
+  const isCrewTrip = crew.length > 1;
+
   return (
     <div className="flex flex-col items-center">
       {/* Card stack container */}
@@ -51,7 +95,7 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
         style={{ width: 160, height: 230 }}
         onClick={onClick}
       >
-        {/* Bottom card (furthest back) - MUCH MORE DRAMATIC */}
+        {/* Bottom card (furthest back) - DRAMATIC */}
         <div
           className="absolute rounded-[2px]"
           style={{
@@ -64,7 +108,7 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
           }}
         />
 
-        {/* Middle card - MORE DRAMATIC */}
+        {/* Middle card - DRAMATIC */}
         <div
           className="absolute rounded-[2px]"
           style={{
@@ -113,7 +157,7 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
               </div>
             )}
 
-            {/* Grain overlay — 35% opacity, multiply */}
+            {/* Grain overlay */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
@@ -133,18 +177,6 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
               }}
             />
 
-            {/* Light leak */}
-            <div
-              className="absolute top-0 left-0 pointer-events-none"
-              style={{
-                width: "40%",
-                height: "40%",
-                background:
-                  "radial-gradient(circle, rgba(255,200,80,0.2) 0%, transparent 65%)",
-                mixBlendMode: "screen",
-              }}
-            />
-
             {/* Status badge */}
             <div
               className={`absolute top-1.5 right-1.5 px-[7px] py-[2px] rounded-full text-white font-bold uppercase ${
@@ -159,6 +191,59 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
             >
               {STATUS_LABELS[status]}
             </div>
+
+            {/* Crew indicator */}
+            {isCrewTrip && !loadingCrew && (
+              <div
+                className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-1 rounded-full bg-amber/90 backdrop-blur-sm"
+                style={{ zIndex: 4 }}
+              >
+                <Users size={10} weight="fill" className="text-white" />
+                <span className="text-white font-bold" style={{ fontSize: 8 }}>
+                  {crew.length}
+                </span>
+              </div>
+            )}
+
+            {/* Crew avatars (bottom of photo) */}
+            {isCrewTrip && !loadingCrew && (
+              <div
+                className="absolute bottom-1.5 left-1.5 flex -space-x-2"
+                style={{ zIndex: 4 }}
+              >
+                {crew.slice(0, 3).map((member, idx) => (
+                  <div
+                    key={member.user_id}
+                    className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-amber/10"
+                    style={{
+                      zIndex: 3 - idx,
+                    }}
+                  >
+                    {member.avatar_url ? (
+                      <img
+                        src={member.avatar_url}
+                        alt={member.display_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-amber/20">
+                        <User size={12} weight="fill" className="text-amber" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {crew.length > 3 && (
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-white bg-amber/90 flex items-center justify-center"
+                    style={{ zIndex: 0 }}
+                  >
+                    <span className="text-white font-bold" style={{ fontSize: 8 }}>
+                      +{crew.length - 3}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Wax seal */}
             <div
@@ -211,7 +296,7 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
         </div>
       </div>
 
-      {/* Countdown below the card stack - INCREASED MARGIN to prevent overlap */}
+      {/* Countdown below the card stack */}
       {!hideCountdown && countdownText && (
         <p
           className={`font-georgia italic text-center mt-6 ${countdownClass}`}
