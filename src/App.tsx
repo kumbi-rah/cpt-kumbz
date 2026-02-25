@@ -16,6 +16,7 @@ import PublicSharePage from "./pages/PublicSharePage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
+import ProfileSetup from "./pages/ProfileSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,14 @@ function AppLayout() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile-setup"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
               </ProtectedRoute>
             }
           />
