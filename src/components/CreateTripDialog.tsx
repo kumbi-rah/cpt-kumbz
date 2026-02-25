@@ -73,60 +73,13 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
     setSearching(true);
     try {
-      // First, find the user by email in auth
-      const { data: authData, error: authError } = await (supabase.rpc as any)(
-        'get_user_id_by_email',
-        { email_address: crewEmail.toLowerCase() }
-      );
-
-      if (authError) {
-        // RPC function might not exist yet, try alternative approach
-        // Search in user_profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('user_id, display_name, avatar_url')
-          .ilike('user_id', '%') // Workaround to get profiles
-          .limit(1000);
-
-        if (profileError) throw profileError;
-
-        // This is a hack - in production, you'd have a proper user search function
-        // For now, we'll just let them add the email and handle it on creation
-        setCrewMembers([
-          ...crewMembers,
-          {
-            user_id: '', // Will be resolved on creation
-            email: crewEmail.toLowerCase(),
-            display_name: undefined,
-          }
-        ]);
-        setCrewEmail("");
-        toast.success(`📧 ${crewEmail} added (they'll be invited when you create the trip)`);
-        return;
-      }
-
-      // If we found the user, get their profile
-      const { data: profile } = await supabase
+      // Try to find user in profiles
+      const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('display_name, avatar_url')
-        .eq('user_id', authData)
-        .single();
+        .select('user_id, display_name, avatar_url')
+        .limit(1000);
 
-      setCrewMembers([
-        ...crewMembers,
-        {
-          user_id: authData,
-          email: crewEmail.toLowerCase(),
-          display_name: profile?.display_name,
-          avatar_url: profile?.avatar_url,
-        }
-      ]);
-      
-      setCrewEmail("");
-      toast.success(`✅ ${profile?.display_name || crewEmail} added to crew!`);
-    } catch (error) {
-      console.error("Error searching user:", error);
-      // Still allow adding by email
+      // For now, just add by email (in production, you'd have proper user search)
       setCrewMembers([
         ...crewMembers,
         {
@@ -136,6 +89,17 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       ]);
       setCrewEmail("");
       toast.success(`📧 ${crewEmail} will be invited when you create the trip`);
+    } catch (error) {
+      console.error("Error searching user:", error);
+      setCrewMembers([
+        ...crewMembers,
+        {
+          user_id: '',
+          email: crewEmail.toLowerCase(),
+        }
+      ]);
+      setCrewEmail("");
+      toast.success(`📧 ${crewEmail} added to crew list`);
     } finally {
       setSearching(false);
     }
@@ -156,11 +120,11 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
     setCreating(true);
     try {
-      // 1. Create the trip
+      // 1. Create the trip - USING created_by instead of user_id
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
-          user_id: user!.id,
+          created_by: user!.id,  // ✅ FIXED: using created_by
           name,
           destination,
           start_date: startDate || null,
@@ -169,7 +133,10 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
         .select()
         .single();
 
-      if (tripError) throw tripError;
+      if (tripError) {
+        console.error("Trip creation error:", tripError);
+        throw tripError;
+      }
 
       // 2. Add crew members (if crew trip)
       if (isCrewTrip && crewMembers.length > 0) {
@@ -196,9 +163,9 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       queryClient.invalidateQueries({ queryKey: ["trips"] });
       handleReset();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating trip:", error);
-      toast.error("Failed to create trip");
+      toast.error(`Failed to create trip: ${error.message || 'Unknown error'}`);
     } finally {
       setCreating(false);
     }
@@ -234,6 +201,9 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
               onChange={(e) => setDestination(e.target.value)}
               required
             />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Enter city and country for best results
+            </p>
           </div>
 
           {/* Dates */}
@@ -299,7 +269,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
                   className="gap-2"
                 >
                   <MagnifyingGlass size={16} />
-                  {searching ? "Searching..." : "Add"}
+                  {searching ? "..." : "Add"}
                 </Button>
               </div>
 
