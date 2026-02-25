@@ -211,10 +211,10 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
         </div>
       </div>
 
-      {/* Countdown below the card stack */}
+      {/* Countdown below the card stack - INCREASED MARGIN to prevent overlap */}
       {!hideCountdown && countdownText && (
         <p
-          className={`font-georgia italic text-center mt-2.5 ${countdownClass}`}
+          className={`font-georgia italic text-center mt-6 ${countdownClass}`}
           style={{ fontSize: 11 }}
         >
           {countdownText}

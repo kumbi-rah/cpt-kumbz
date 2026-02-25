@@ -21,6 +21,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -28,6 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
@@ -39,7 +41,7 @@ function AppLayout() {
   return (
     <div className="flex min-h-screen w-full">
       {user && <SideNav onCreateClick={() => setCreateOpen(true)} />}
-      <main className={`flex-1 overflow-x-hidden animate-page-enter ${user ? "md:ml-[200px]" : ""}`}>
+      <main className={`flex-1 overflow-x-hidden animate-page-enter ${user ? "md:ml-[260px]" : ""}`}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
