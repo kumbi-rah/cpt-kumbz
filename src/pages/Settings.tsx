@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { MapPin, Moon, Sun, FloppyDisk } from "@phosphor-icons/react";
+
+interface GeoResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
 
 export default function Settings() {
   const { user } = useAuth();
@@ -17,14 +23,41 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Load user settings from Supabase
   useEffect(() => {
     loadSettings();
   }, [user]);
 
+  // Apply theme on initial load from localStorage (before Supabase loads)
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      setTheme("dark");
+    }
+  }, []);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const loadSettings = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -34,7 +67,6 @@ export default function Settings() {
         .single();
 
       if (error && error.code !== "PGRST116") {
-        // PGRST116 = no rows returned, which is fine for new users
         console.error("Error loading settings:", error);
       }
 
@@ -42,12 +74,9 @@ export default function Settings() {
         setHomeCity(data.home_city || "");
         setHomeLat(data.home_lat?.toString() || "");
         setHomeLng(data.home_lng?.toString() || "");
-        setTheme((data.theme as "light" | "dark") || "light");
-        
-        // Apply theme
-        if (data.theme === "dark") {
-          document.documentElement.classList.add("dark");
-        }
+        const t = (data.theme as "light" | "dark") || "light";
+        setTheme(t);
+        applyTheme(t);
       }
     } catch (err) {
       console.error("Failed to load settings:", err);
@@ -56,9 +85,18 @@ export default function Settings() {
     }
   };
 
+  const applyTheme = (t: "light" | "dark") => {
+    if (t === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", t);
+  };
+
   const saveSettings = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
       const settings = {
@@ -77,13 +115,6 @@ export default function Settings() {
       if (error) throw error;
 
       toast.success("⚓ Settings saved!");
-      
-      // Apply theme immediately
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
     } catch (err) {
       console.error("Failed to save settings:", err);
       toast.error("⚓ Failed to save settings");
@@ -93,33 +124,50 @@ export default function Settings() {
   };
 
   const handleThemeToggle = (checked: boolean) => {
-    setTheme(checked ? "dark" : "light");
+    const t = checked ? "dark" : "light";
+    setTheme(t);
+    applyTheme(t);
   };
 
-  // Simple geocoding using Nominatim (OpenStreetMap)
-  const geocodeCity = async () => {
-    if (!homeCity.trim()) {
-      toast.error("Please enter a city name");
+  // Debounced city search for autocomplete
+  const searchCities = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(homeCity)}&format=json&limit=1`
-      );
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        setHomeLat(parseFloat(data[0].lat).toFixed(6));
-        setHomeLng(parseFloat(data[0].lon).toFixed(6));
-        toast.success(`📍 Found coordinates for ${data[0].display_name}`);
-      } else {
-        toast.error("City not found. Try being more specific (e.g., 'San Diego, California')");
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`
+        );
+        const data: GeoResult[] = await response.json();
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      } finally {
+        setSearchLoading(false);
       }
-    } catch (err) {
-      console.error("Geocoding error:", err);
-      toast.error("Failed to find city");
-    }
+    }, 350);
+  }, []);
+
+  const handleCityInputChange = (value: string) => {
+    setHomeCity(value);
+    searchCities(value);
+  };
+
+  const selectSuggestion = (result: GeoResult) => {
+    setHomeCity(result.display_name);
+    setHomeLat(parseFloat(result.lat).toFixed(6));
+    setHomeLng(parseFloat(result.lon).toFixed(6));
+    setSuggestions([]);
+    setShowSuggestions(false);
+    toast.success(`📍 Selected: ${result.display_name}`);
   };
 
   if (loading) {
@@ -151,55 +199,44 @@ export default function Settings() {
             </p>
 
             <div className="space-y-4">
-              <div>
+              <div ref={containerRef} className="relative">
                 <Label htmlFor="city" className="text-sm font-medium text-ink mb-2 block">
                   City or Address
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="city"
-                    placeholder="e.g., San Diego, California"
-                    value={homeCity}
-                    onChange={(e) => setHomeCity(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={geocodeCity} variant="outline" className="gap-2">
-                    <MapPin size={16} />
-                    Find
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Enter your city and click "Find" to get coordinates
-                </p>
-              </div>
+                <Input
+                  id="city"
+                  placeholder="Start typing a city name..."
+                  value={homeCity}
+                  onChange={(e) => handleCityInputChange(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  autoComplete="off"
+                />
+                {homeLat && homeLng && (
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    📍 Coordinates set: {homeLat}, {homeLng}
+                  </p>
+                )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="lat" className="text-sm font-medium text-ink mb-2 block">
-                    Latitude
-                  </Label>
-                  <Input
-                    id="lat"
-                    placeholder="32.715736"
-                    value={homeLat}
-                    onChange={(e) => setHomeLat(e.target.value)}
-                    type="number"
-                    step="any"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lng" className="text-sm font-medium text-ink mb-2 block">
-                    Longitude
-                  </Label>
-                  <Input
-                    id="lng"
-                    placeholder="-117.161087"
-                    value={homeLng}
-                    onChange={(e) => setHomeLng(e.target.value)}
-                    type="number"
-                    step="any"
-                  />
-                </div>
+                {/* Autocomplete dropdown */}
+                {showSuggestions && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {searchLoading ? (
+                      <div className="px-4 py-3 text-sm text-muted-foreground">Searching...</div>
+                    ) : (
+                      suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-accent transition-colors border-b last:border-b-0 flex items-start gap-2"
+                          onClick={() => selectSuggestion(s)}
+                        >
+                          <MapPin size={14} className="text-amber mt-0.5 shrink-0" />
+                          <span className="line-clamp-2">{s.display_name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
