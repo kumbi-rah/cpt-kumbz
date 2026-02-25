@@ -1,30 +1,63 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import CreateTripDialog from "@/components/CreateTripDialog";
 import Index from "./pages/Index";
 import Trips from "./pages/Trips";
 import TripDetail from "./pages/TripDetail";
-const GlobePage = lazy(() => import("./pages/GlobePage"));
+import GlobePage from "./pages/GlobePage";
+import Settings from "./pages/Settings";
+import ProfileSetup from "./pages/ProfileSetup";
 import PublicSharePage from "./pages/PublicSharePage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import Settings from "./pages/Settings";
-import ProfileSetup from "./pages/ProfileSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!user) {
+        setCheckingProfile(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code === "PGRST116") {
+          // No profile found - redirect to setup
+          navigate("/profile-setup", { replace: true });
+        }
+      } catch (err) {
+        console.error("Error checking profile:", err);
+      } finally {
+        setCheckingProfile(false);
+      }
+    };
+
+    if (!loading) {
+      checkProfile();
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || checkingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="font-georgia italic text-muted-foreground">Loading...</p>
@@ -48,6 +81,14 @@ function AppLayout() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/share/:shareToken" element={<PublicSharePage />} />
+          <Route
+            path="/profile-setup"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/"
             element={
@@ -76,17 +117,7 @@ function AppLayout() {
             path="/globe"
             element={
               <ProtectedRoute>
-                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="font-georgia italic text-muted-foreground">Loading globe...</p></div>}>
-                  <GlobePage />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create"
-            element={
-              <ProtectedRoute>
-                <Index onCreateClick={() => setCreateOpen(true)} />
+                <GlobePage />
               </ProtectedRoute>
             }
           />
@@ -99,10 +130,10 @@ function AppLayout() {
             }
           />
           <Route
-            path="/profile-setup"
+            path="/create"
             element={
               <ProtectedRoute>
-                <ProfileSetup />
+                <Index onCreateClick={() => setCreateOpen(true)} />
               </ProtectedRoute>
             }
           />
