@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import type { TripSection } from "@/hooks/useTrips";
 import EditTripDialog from "@/components/EditTripDialog";
 import WaxSeal from "@/components/icons/WaxSeal";
+import TripChat from "@/components/TripChat";
 
 const TripMap = lazy(() => import("@/components/TripMap"));
 
@@ -165,6 +166,7 @@ export default function TripDetail() {
               <TabsTrigger value="sections" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Sections</TabsTrigger>
               <TabsTrigger value="arrivals" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">The Crew</TabsTrigger>
               <TabsTrigger value="photos" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Photos</TabsTrigger>
+              <TabsTrigger value="chat" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Chat</TabsTrigger>
               <TabsTrigger value="map" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Map</TabsTrigger>
               <TabsTrigger value="share" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Share</TabsTrigger>
             </TabsList>
@@ -255,6 +257,10 @@ export default function TripDetail() {
 
             <TabsContent value="photos" className="mt-5">
               <PhotoGallery tripId={id!} />
+            </TabsContent>
+
+            <TabsContent value="chat" className="mt-5">
+              <TripChat tripId={id!} />
             </TabsContent>
 
             <TabsContent value="map" className="mt-5">
