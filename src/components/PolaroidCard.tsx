@@ -51,12 +51,12 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
         style={{ width: 160, height: 230 }}
         onClick={onClick}
       >
-        {/* Bottom card (furthest back) */}
+        {/* Bottom card (furthest back) - MUCH MORE DRAMATIC */}
         <div
           className="absolute rounded-[2px]"
           style={{
             inset: 0,
-            transform: "rotate(5deg) translate(-14px, 10px)",
+            transform: "rotate(8deg) translate(-22px, 16px)",
             background: "#D4C9B0",
             boxShadow: "0 4px 12px rgba(80,60,30,0.25)",
             zIndex: 1,
@@ -64,12 +64,12 @@ export default function PolaroidCard({ trip, onClick, hideCountdown }: Props) {
           }}
         />
 
-        {/* Middle card */}
+        {/* Middle card - MORE DRAMATIC */}
         <div
           className="absolute rounded-[2px]"
           style={{
             inset: 0,
-            transform: "rotate(-3.5deg) translate(7px, 5px)",
+            transform: "rotate(-5deg) translate(12px, 8px)",
             background: "#E2D9C4",
             boxShadow: "0 4px 14px rgba(80,60,30,0.22)",
             zIndex: 2,
