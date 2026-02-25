@@ -51,7 +51,7 @@ export default function TripDetail() {
     return (
       <div className="min-h-screen pb-nav">
         <div className="max-w-4xl mx-auto">
-          <Skeleton className="h-52 md:h-72 w-full" />
+          <Skeleton className="h-60 md:h-80 w-full" />
           <div className="px-5 -mt-6 relative z-10">
             <div className="bg-card rounded-xl border p-4 shadow-sm space-y-3">
               <Skeleton className="h-6 w-48" />
@@ -93,45 +93,45 @@ export default function TripDetail() {
       // Open the full editor for other types
       setEditingSection(null);
       setEditorOpen(true);
-      // We need to pass the pre-selected type; the SectionEditor already defaults
-      // For now just open editor — user picks type there (it's pre-filtered)
     }
   };
 
   return (
     <div className="min-h-screen pb-nav animate-scroll-unfold">
       <div className="max-w-4xl mx-auto">
-        {/* Hero */}
-        <div className="relative h-52 md:h-72 overflow-hidden">
+        {/* Hero - Full width edge-to-edge */}
+        <div className="relative h-60 md:h-80 overflow-hidden">
           {trip.cover_photo_url ? (
-            <img src={trip.cover_photo_url} alt={trip.name} className="w-full h-full object-cover vintage-filter" />
+            <>
+              <img src={trip.cover_photo_url} alt={trip.name} className="w-full h-full object-cover vintage-filter" />
+              <div className="vignette-overlay" />
+            </>
           ) : (
             <div className="w-full h-full parchment-bg" />
           )}
-          <div className="vignette-overlay" />
           <div className="grain-overlay" />
-          <button onClick={() => navigate(-1)} className="absolute top-4 left-4 bg-black/30 text-white p-2 rounded-full backdrop-blur-sm">
+          <button onClick={() => navigate(-1)} className="absolute top-4 left-4 bg-black/30 text-white p-2 rounded-full backdrop-blur-sm hover:bg-black/40 transition-colors">
             <ArrowLeft size={20} />
           </button>
         </div>
 
-        {/* Info */}
-        <div className="px-5 -mt-6 relative z-10">
-          <div className="bg-card rounded-xl border p-4 shadow-sm">
+        {/* Info Card - Better overlap */}
+        <div className="px-5 -mt-8 relative z-10">
+          <div className="bg-card rounded-xl border p-5 md:p-6 shadow-lg">
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1">
                 <h1 className="font-georgia text-2xl md:text-3xl font-bold text-ink">{trip.name}</h1>
                 {trip.destination && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <MapPin size={14} weight="duotone" className="text-teal" /> {formatDestination(trip.destination)}
+                  <p className="text-sm md:text-base text-muted-foreground flex items-center gap-1.5 mt-1">
+                    <MapPin size={16} weight="duotone" className="text-teal" /> {formatDestination(trip.destination)}
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm md:text-base text-muted-foreground mt-1.5">
                   {trip.start_date && format(new Date(trip.start_date), "MMM d")}
                   {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d, yyyy")}`}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                 <button
                   onClick={() => setEditTripOpen(true)}
                   className="p-2 rounded-md text-muted-foreground hover:text-ink hover:bg-accent transition-colors"
@@ -147,10 +147,10 @@ export default function TripDetail() {
 
             {/* Share bar */}
             {showShareBar && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                 <WaxSeal size={18} className="text-amber flex-shrink-0" />
-                <p className="text-xs text-muted-foreground truncate flex-1">{shareUrl}</p>
-                <Button size="sm" variant="outline" onClick={copyShareLink} className="gap-1 text-xs h-7">
+                <p className="text-xs text-muted-foreground truncate flex-1 font-mono">{shareUrl}</p>
+                <Button size="sm" variant="outline" onClick={copyShareLink} className="gap-1 text-xs h-8">
                   <Copy size={12} /> Copy
                 </Button>
               </div>
@@ -158,21 +158,21 @@ export default function TripDetail() {
           </div>
         </div>
 
-        {/* Content tabs */}
-        <div className="px-5 mt-5">
+        {/* Content tabs - Better spacing and styling */}
+        <div className="px-5 mt-6 md:mt-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full bg-card border">
-              <TabsTrigger value="sections" className="flex-1 text-xs">Sections</TabsTrigger>
-              <TabsTrigger value="arrivals" className="flex-1 text-xs">The Crew</TabsTrigger>
-              <TabsTrigger value="photos" className="flex-1 text-xs">Photos</TabsTrigger>
-              <TabsTrigger value="map" className="flex-1 text-xs">Map</TabsTrigger>
-              <TabsTrigger value="share" className="flex-1 text-xs">Share</TabsTrigger>
+              <TabsTrigger value="sections" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Sections</TabsTrigger>
+              <TabsTrigger value="arrivals" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">The Crew</TabsTrigger>
+              <TabsTrigger value="photos" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Photos</TabsTrigger>
+              <TabsTrigger value="map" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Map</TabsTrigger>
+              <TabsTrigger value="share" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Share</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="sections" className="mt-4 space-y-3">
+            <TabsContent value="sections" className="mt-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-georgia font-bold text-ink section-header-line flex-1">Sections</h3>
-                <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)} className="gap-1 ml-3">
+                <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)} className="gap-1.5 ml-3">
                   <Plus size={14} weight="bold" /> Add
                 </Button>
               </div>
@@ -190,8 +190,8 @@ export default function TripDetail() {
 
                   if (s.type === "packing_list") {
                     return (
-                      <div key={s.id} className="bg-card rounded-lg border p-4">
-                        <div className="flex items-center justify-between mb-2">
+                      <div key={s.id} className="bg-card rounded-lg border p-5">
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <ListChecks size={20} weight="duotone" className="text-amber flex-shrink-0" />
                             <p className="text-sm font-medium text-ink">{s.title || "Packing List"}</p>
@@ -228,7 +228,7 @@ export default function TripDetail() {
                   return (
                     <div
                       key={s.id}
-                      className="flex items-center gap-3 p-3 bg-card rounded-lg border cursor-pointer hover:bg-accent/30 transition-colors"
+                      className="flex items-center gap-3 p-4 bg-card rounded-lg border cursor-pointer hover:bg-accent/30 transition-colors"
                       onClick={() => openEditor(s)}
                     >
                       <Icon size={20} weight="duotone" className="text-amber flex-shrink-0" />
@@ -249,15 +249,15 @@ export default function TripDetail() {
               )}
             </TabsContent>
 
-            <TabsContent value="arrivals" className="mt-4">
+            <TabsContent value="arrivals" className="mt-5">
               <ArrivalTracker tripId={id!} />
             </TabsContent>
 
-            <TabsContent value="photos" className="mt-4">
+            <TabsContent value="photos" className="mt-5">
               <PhotoGallery tripId={id!} />
             </TabsContent>
 
-            <TabsContent value="map" className="mt-4">
+            <TabsContent value="map" className="mt-5">
               {activeTab === "map" && (
                 <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-lg" />}>
                   <TripMap trip={trip} onEditTrip={() => setEditTripOpen(true)} />
@@ -265,7 +265,7 @@ export default function TripDetail() {
               )}
             </TabsContent>
 
-            <TabsContent value="share" className="mt-4">
+            <TabsContent value="share" className="mt-5">
               <ShareSettings tripId={id!} />
             </TabsContent>
           </Tabs>
