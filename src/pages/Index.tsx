@@ -41,10 +41,10 @@ export default function Home({ onCreateClick }: Props) {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-nav animate-scroll-unfold">
-        <div className="max-w-5xl mx-auto px-5 pt-8 space-y-6">
+        <div className="max-w-5xl mx-auto px-5 pt-12 md:pt-16 space-y-8">
           <Skeleton className="h-[240px] md:h-[340px] w-full rounded-2xl" />
           <Skeleton className="h-5 w-full" />
-          <div className="flex gap-5">
+          <div className="flex gap-6 md:gap-8">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-[240px] w-[180px] flex-shrink-0 rounded-xl" />
             ))}
@@ -87,47 +87,44 @@ export default function Home({ onCreateClick }: Props) {
 
   return (
     <div className="min-h-screen pb-nav animate-scroll-unfold">
-      <div className="max-w-5xl mx-auto px-5 pt-6 md:pt-8">
+      <div className="max-w-5xl mx-auto px-5 pt-12 md:pt-16">
         {/* Hero — Next Adventure */}
         <HeroCard trip={heroTrip} onCreateClick={onCreateClick} />
 
-        <RopeDivider className="my-2" />
+        {/* Only show upcoming section if there are more trips after hero */}
+        {stripTrips.length > 0 && (
+          <>
+            <RopeDivider className="my-8 md:my-10" />
 
-        {/* Upcoming Voyages Strip */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-cinzel text-[13px] uppercase tracking-[2px] text-primary section-header-line flex-1">
-              Upcoming Voyages
-            </p>
-            <button
-              onClick={() => navigate("/trips")}
-              className="text-sm text-primary hover:underline font-georgia ml-4 flex-shrink-0"
-            >
-              View all →
-            </button>
-          </div>
+            {/* Upcoming Voyages Strip */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-cinzel text-[13px] uppercase tracking-[2px] text-primary section-header-line flex-1">
+                  Upcoming Voyages
+                </p>
+                <button
+                  onClick={() => navigate("/trips")}
+                  className="text-sm text-primary hover:underline font-georgia ml-4 flex-shrink-0"
+                >
+                  View all →
+                </button>
+              </div>
 
-          {stripTrips.length === 0 ? (
-            <div className="flex gap-5 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-              <div className="flex-shrink-0 w-[180px] h-[280px] rounded-xl border-2 border-dashed border-border flex items-center justify-center px-4">
-                <p className="font-georgia italic text-sm text-muted-foreground text-center">More adventures coming...</p>
+              <div className="flex gap-6 md:gap-8 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+                {stripTrips.map((trip) => (
+                  <div key={trip.id} className="flex-shrink-0 w-[180px]">
+                    <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
+                  </div>
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="flex gap-5 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-              {stripTrips.map((trip) => (
-                <div key={trip.id} className="flex-shrink-0 w-[180px]">
-                  <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          </>
+        )}
 
-        <RopeDivider className="my-2" />
+        <RopeDivider className="my-8 md:my-10" />
 
         {/* Stats Bar */}
-        <div className="rounded-2xl border shadow-sm py-5 md:py-6 px-4" style={{ background: "#FAF7F2", borderColor: "rgba(80,60,30,0.13)" }}>
+        <div className="rounded-2xl border shadow-md py-6 md:py-7 px-4" style={{ background: "#FAF7F2", borderColor: "rgba(80,60,30,0.13)" }}>
           <div className="grid grid-cols-4 divide-x divide-primary/30">
             <StatItem value={animCountries} label="Countries" />
             <StatItem value={animTrips} label="Trips" />
@@ -143,8 +140,8 @@ export default function Home({ onCreateClick }: Props) {
 function StatItem({ value, label }: { value: string | number; label: string }) {
   return (
     <div className="text-center px-2">
-      <p className="font-georgia text-[32px] font-bold text-primary leading-none">{value}</p>
-      <p className="text-[11px] uppercase tracking-[1.5px] text-muted-foreground mt-1">{label}</p>
+      <p className="font-georgia text-[32px] md:text-[36px] font-bold text-primary leading-none">{value}</p>
+      <p className="text-[11px] uppercase tracking-[1.5px] text-muted-foreground mt-1.5">{label}</p>
     </div>
   );
 }
