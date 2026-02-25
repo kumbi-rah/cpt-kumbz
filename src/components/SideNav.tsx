@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { SignOut } from "@phosphor-icons/react";
+import { SignOut, Gear } from "@phosphor-icons/react";
 import { useAuth } from "@/contexts/AuthContext";
 import CompassRose from "@/components/icons/CompassRose";
 import TreasureMapScroll from "@/components/icons/TreasureMapScroll";
@@ -20,6 +20,7 @@ export default function SideNav({ onCreateClick }: Props) {
     { label: "Home", icon: CompassRose, route: "/", match: (p: string) => p === "/" },
     { label: "Trips", icon: TreasureMapScroll, route: "/trips", match: (p: string) => p === "/trips" },
     { label: "Globe", icon: ShipsWheel, route: "/globe", match: (p: string) => p === "/globe" },
+    { label: "Settings", icon: Gear, route: "/settings", match: (p: string) => p === "/settings" },
   ];
 
   return (
@@ -43,14 +44,10 @@ export default function SideNav({ onCreateClick }: Props) {
               key={item.label}
               onClick={() => navigate(item.route)}
               className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-[15px] font-medium transition-colors relative ${
-                active
-                  ? "text-amber bg-amber/10"
-                  : "text-muted-foreground hover:text-ink hover:bg-accent/50"
+                active ? "text-amber bg-amber/10" : "text-muted-foreground hover:text-ink hover:bg-accent/50"
               }`}
             >
-              {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-amber" />
-              )}
+              {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-amber" />}
               <item.icon size={22} className={`flex-shrink-0 ${active ? "text-amber" : ""}`} />
               {item.label}
             </button>
