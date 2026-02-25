@@ -1,7 +1,10 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import GlobeScene from "@/components/GlobeScene";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrips } from "@/hooks/useTrips";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { totalMiles, uniqueCountries } from "@/lib/haversine";
 import { getTripStatus } from "@/lib/tripStatus";
 import { useCountUp } from "@/lib/useCountUp";
@@ -9,7 +12,9 @@ import RopeDivider from "@/components/icons/RopeDivider";
 
 export default function GlobePage() {
   const { data: trips = [], isLoading } = useTrips();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [homeLocation, setHomeLocation] = useState<{ lat: number; lng: number; city: string } | null>(null);
 
   const past = trips.filter((t) => getTripStatus(t.start_date, t.end_date) === "past");
   const countries = uniqueCountries(trips);
@@ -18,6 +23,33 @@ export default function GlobePage() {
   const animTrips = useCountUp(trips.length);
   const animCountries = useCountUp(countries);
   const animMiles = useCountUp(miles);
+
+  // Fetch home location from user settings
+  useEffect(() => {
+    const fetchHomeLocation = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("user_settings")
+          .select("home_lat, home_lng, home_city")
+          .eq("user_id", user.id)
+          .single();
+
+        if (data && data.home_lat && data.home_lng) {
+          setHomeLocation({
+            lat: data.home_lat,
+            lng: data.home_lng,
+            city: data.home_city || "Home",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch home location:", err);
+      }
+    };
+
+    fetchHomeLocation();
+  }, [user]);
 
   return (
     <div className="min-h-screen pb-nav flex flex-col animate-scroll-unfold">
@@ -35,7 +67,11 @@ export default function GlobePage() {
             </div>
           ) : (
             <div className="w-full h-full">
-              <GlobeScene trips={trips} onTripClick={(id) => navigate(`/trip/${id}`)} />
+              <GlobeScene 
+                trips={trips} 
+                onTripClick={(id) => navigate(`/trip/${id}`)} 
+                homeLocation={homeLocation}
+              />
             </div>
           )}
         </div>
