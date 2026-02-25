@@ -15,6 +15,7 @@ const GlobePage = lazy(() => import("./pages/GlobePage"));
 import PublicSharePage from "./pages/PublicSharePage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,14 @@ function AppLayout() {
             element={
               <ProtectedRoute>
                 <Index onCreateClick={() => setCreateOpen(true)} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
