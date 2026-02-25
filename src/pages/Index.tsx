@@ -41,7 +41,7 @@ export default function Home({ onCreateClick }: Props) {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-nav animate-scroll-unfold">
-        <div className="max-w-5xl mx-auto px-5 pt-12 md:pt-16 space-y-8">
+        <div className="max-w-6xl mx-auto px-5 pt-12 md:pt-16 space-y-8">
           <Skeleton className="h-[240px] md:h-[340px] w-full rounded-2xl" />
           <Skeleton className="h-5 w-full" />
           <div className="flex gap-6 md:gap-8">
@@ -75,7 +75,7 @@ export default function Home({ onCreateClick }: Props) {
           <p className="font-georgia italic text-muted-foreground text-[15px] mb-6">Every great adventure starts with a plan.</p>
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-georgia text-base hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-georgia text-base hover:bg-primary/90 transition-colors border border-primary/20"
           >
             <Anchor size={18} weight="bold" />
             Chart Your First Adventure
@@ -87,7 +87,7 @@ export default function Home({ onCreateClick }: Props) {
 
   return (
     <div className="min-h-screen pb-nav animate-scroll-unfold">
-      <div className="max-w-5xl mx-auto px-5 pt-12 md:pt-16">
+      <div className="max-w-6xl mx-auto px-5 pt-10 md:pt-14">
         {/* Hero — Next Adventure */}
         <HeroCard trip={heroTrip} onCreateClick={onCreateClick} />
 
@@ -98,7 +98,7 @@ export default function Home({ onCreateClick }: Props) {
 
             {/* Upcoming Voyages Strip */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <p className="font-cinzel text-[13px] uppercase tracking-[2px] text-primary section-header-line flex-1">
                   Upcoming Voyages
                 </p>
@@ -110,7 +110,7 @@ export default function Home({ onCreateClick }: Props) {
                 </button>
               </div>
 
-              <div className="flex gap-6 md:gap-8 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+              <div className="flex gap-8 md:gap-10 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
                 {stripTrips.map((trip) => (
                   <div key={trip.id} className="flex-shrink-0 w-[180px]">
                     <PolaroidCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`)} />
