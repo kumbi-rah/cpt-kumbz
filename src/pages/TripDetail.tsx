@@ -1,295 +1,264 @@
-import { useState, lazy, Suspense } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { ArrowLeft, Copy, MapPin, Scroll, Binoculars, Notepad, Camera, Star, Plus, PencilSimple, ListChecks, Flag, Anchor, Lock } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTrip, useTripSections, useCreateSection } from "@/hooks/useTrips";
-import { ALWAYS_PRIVATE_TYPES, SECTION_TYPE_LABELS } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatDestination } from "@/lib/formatDestination";
-import { getTripStatus, STATUS_LABELS, STATUS_COLORS } from "@/lib/tripStatus";
-import ArrivalTracker from "@/components/ArrivalTracker";
-import PhotoGallery from "@/components/PhotoGallery";
-import ShareSettings from "@/components/ShareSettings";
-import SectionEditor from "@/components/SectionEditor";
-import ItineraryView from "@/components/ItineraryView";
-import PackingList from "@/components/PackingList";
-import QuickNotes from "@/components/QuickNotes";
-import SectionTypePicker from "@/components/SectionTypePicker";
-import { toast } from "sonner";
-import type { TripSection } from "@/hooks/useTrips";
-import EditTripDialog from "@/components/EditTripDialog";
-import WaxSeal from "@/components/icons/WaxSeal";
 import TripChat from "@/components/TripChat";
+import { Users, User, ChatCircle } from "@phosphor-icons/react";
 
-const TripMap = lazy(() => import("@/components/TripMap"));
-
-const SECTION_ICONS: Record<string, any> = {
-  itinerary: Scroll,
-  recommendations: Star,
-  packing_list: ListChecks,
-  lodging: Anchor,
-  arrivals: Binoculars,
-  notes: Scroll,
-  photos: Camera,
-};
+interface Crew {
+  user_id: string;
+  role: string;
+  user_profile?: {
+    display_name: string;
+    avatar_url: string | null;
+  };
+}
 
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { data: trip, isLoading } = useTrip(id!);
-  const { data: sections = [] } = useTripSections(id!);
-  const createSection = useCreateSection();
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editingSection, setEditingSection] = useState<TripSection | null>(null);
-  const [editTripOpen, setEditTripOpen] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("sections");
+  const { user } = useAuth();
+  const [trip, setTrip] = useState<any>(null);
+  const [crew, setCrew] = useState<Crew[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (id) {
+      loadTripAndCrew();
+    }
+  }, [id]);
+
+  const loadTripAndCrew = async () => {
+    if (!id) return;
+
+    setLoading(true);
+    try {
+      // Load trip
+      const { data: tripData, error: tripError } = await supabase
+        .from("trips")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (tripError) throw tripError;
+      setTrip(tripData);
+      setIsOwner(tripData.created_by === user?.id);
+
+      // Load crew with separate profile fetch
+      const { data: crewData, error: crewError } = await supabase
+        .from("trip_crew")
+        .select("user_id, role")
+        .eq("trip_id", id);
+
+      if (crewError) throw crewError;
+
+      const userIds = (crewData || []).map((c) => c.user_id);
+      const { data: profiles } = userIds.length
+        ? await supabase.from("user_profiles").select("user_id, display_name, avatar_url").in("user_id", userIds)
+        : { data: [] };
+
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+      const enrichedCrew: Crew[] = (crewData || []).map((c) => ({
+        ...c,
+        user_profile: profileMap.get(c.user_id) as Crew["user_profile"],
+      }));
+      setCrew(enrichedCrew);
+    } catch (error) {
+      console.error("Error loading trip:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen pb-nav">
-        <div className="max-w-4xl mx-auto">
-          <Skeleton className="h-60 md:h-80 w-full" />
-          <div className="px-5 -mt-6 relative z-10">
-            <div className="bg-card rounded-xl border p-4 shadow-sm space-y-3">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
+        <Skeleton className="h-60 md:h-80 w-full" />
+        <div className="max-w-5xl mx-auto px-5 -mt-8 space-y-4">
+          <Skeleton className="h-96 w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
   if (!trip) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-georgia italic">Trip not found</div>;
+    return (
+      <div className="min-h-screen pb-nav flex items-center justify-center">
+        <p className="font-georgia italic text-muted-foreground">Trip not found</p>
+      </div>
+    );
   }
 
-  const status = getTripStatus(trip.start_date, trip.end_date);
-  const hasPublicSections = sections.some((s) => s.is_public === true);
-  const showShareBar = trip.share_enabled && hasPublicSections;
-  const shareUrl = `${window.location.origin}/share/${trip.share_token}`;
-  const copyShareLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast.success("Share link copied!");
-  };
-
-  const openEditor = (section?: TripSection) => {
-    setEditingSection(section || null);
-    setEditorOpen(true);
-  };
-
-  const handlePickerSelect = (type: string) => {
-    if (type === "notes") {
-      // Create notes section directly — always private
-      createSection.mutate(
-        { trip_id: id!, type: "notes", title: "Notes", content: null, is_public: false, sort_order: sections.length },
-        { onSuccess: () => toast.success("Notes section added"), onError: () => toast.error("Failed to create section") }
-      );
-    } else {
-      // Open the full editor for other types
-      setEditingSection(null);
-      setEditorOpen(true);
-    }
-  };
+  const isCrewTrip = crew.length > 1; // More than just owner
 
   return (
-    <div className="min-h-screen pb-nav animate-scroll-unfold">
-      <div className="max-w-4xl mx-auto">
-        {/* Hero - Full width edge-to-edge */}
-        <div className="relative h-60 md:h-80 overflow-hidden">
-          {trip.cover_photo_url ? (
-            <>
-              <img src={trip.cover_photo_url} alt={trip.name} className="w-full h-full object-cover vintage-filter" />
-              <div className="vignette-overlay" />
-            </>
-          ) : (
-            <div className="w-full h-full parchment-bg" />
+    <div className="min-h-screen pb-nav">
+      {/* Cover Photo */}
+      <div className="relative h-60 md:h-80 w-full overflow-hidden">
+        {trip.cover_photo_url ? (
+          <img
+            src={trip.cover_photo_url}
+            alt={trip.name}
+            className="w-full h-full object-cover vintage-filter"
+          />
+        ) : (
+          <div
+            className="w-full h-full"
+            style={{
+              background: "linear-gradient(135deg, #C8A96E, #8B6914)",
+            }}
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(42,34,24,0.3) 0%, rgba(42,34,24,0.88) 100%)",
+          }}
+        />
+        <div className="absolute bottom-6 left-5 right-5">
+          <h1 className="font-georgia text-[26px] md:text-[38px] font-bold text-parchment drop-shadow-lg">
+            {trip.name}
+          </h1>
+          {trip.destination && (
+            <p className="text-parchment/90 text-base md:text-lg drop-shadow-md mt-1">
+              {formatDestination(trip.destination)}
+            </p>
           )}
-          <div className="grain-overlay" />
-          <button onClick={() => navigate(-1)} className="absolute top-4 left-4 bg-black/30 text-white p-2 rounded-full backdrop-blur-sm hover:bg-black/40 transition-colors">
-            <ArrowLeft size={20} />
-          </button>
         </div>
+      </div>
 
-        {/* Info Card - Better overlap */}
-        <div className="px-5 -mt-8 relative z-10">
-          <div className="bg-card rounded-xl border p-5 md:p-6 shadow-lg">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h1 className="font-georgia text-2xl md:text-3xl font-bold text-ink">{trip.name}</h1>
-                {trip.destination && (
-                  <p className="text-sm md:text-base text-muted-foreground flex items-center gap-1.5 mt-1">
-                    <MapPin size={16} weight="duotone" className="text-teal" /> {formatDestination(trip.destination)}
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-5 -mt-8">
+        <div className="bg-card rounded-2xl shadow-lg border p-5 md:p-6">
+          {/* Crew Banner (if crew trip) */}
+          {isCrewTrip && (
+            <div className="mb-6 p-4 bg-amber/5 border border-amber/20 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <Users size={24} weight="duotone" className="text-amber" />
+                <div>
+                  <p className="font-medium text-sm">Crew Trip</p>
+                  <p className="text-xs text-muted-foreground">
+                    {crew.length} crew member{crew.length !== 1 ? 's' : ''}
                   </p>
-                )}
-                <p className="text-sm md:text-base text-muted-foreground mt-1.5">
-                  {trip.start_date && format(new Date(trip.start_date), "MMM d")}
-                  {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d, yyyy")}`}
-                </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                <button
-                  onClick={() => setEditTripOpen(true)}
-                  className="p-2 rounded-md text-muted-foreground hover:text-ink hover:bg-accent transition-colors"
-                  title="Edit trip"
-                >
-                  <PencilSimple size={18} weight="duotone" />
-                </button>
-                <Badge className={STATUS_COLORS[status]}>
-                  {STATUS_LABELS[status]}
-                </Badge>
+
+              {/* Crew List */}
+              <div className="flex flex-wrap gap-3">
+                {crew.map((member) => (
+                  <div
+                    key={member.user_id}
+                    className="flex items-center gap-2 bg-background px-3 py-2 rounded-lg border"
+                  >
+                    {member.user_profile?.avatar_url ? (
+                      <img
+                        src={member.user_profile.avatar_url}
+                        alt={member.user_profile.display_name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-amber/10 flex items-center justify-center">
+                        <User size={16} weight="duotone" className="text-amber" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">
+                        {member.user_profile?.display_name || 'Unknown'}
+                      </p>
+                      {member.role === 'owner' && (
+                        <span className="text-xs bg-amber/20 text-amber px-2 py-0.5 rounded-full font-medium">
+                          Owner
+                        </span>
+                      )}
+                      {member.user_id === user?.id && member.role !== 'owner' && (
+                        <span className="text-xs text-muted-foreground">(You)</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Share bar */}
-            {showShareBar && (
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                <WaxSeal size={18} className="text-amber flex-shrink-0" />
-                <p className="text-xs text-muted-foreground truncate flex-1 font-mono">{shareUrl}</p>
-                <Button size="sm" variant="outline" onClick={copyShareLink} className="gap-1 text-xs h-8">
-                  <Copy size={12} /> Copy
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Content tabs - Better spacing and styling */}
-        <div className="px-5 mt-6 md:mt-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full bg-card border">
-              <TabsTrigger value="sections" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Sections</TabsTrigger>
-              <TabsTrigger value="arrivals" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">The Crew</TabsTrigger>
-              <TabsTrigger value="photos" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Photos</TabsTrigger>
-              <TabsTrigger value="chat" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Chat</TabsTrigger>
-              <TabsTrigger value="map" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Map</TabsTrigger>
-              <TabsTrigger value="share" className="flex-1 text-xs md:text-sm data-[state=active]:bg-amber/10 data-[state=active]:font-semibold">Share</TabsTrigger>
+          {/* Tabs */}
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger
+                value="details"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold"
+              >
+                Details
+              </TabsTrigger>
+              <TabsTrigger
+                value="itinerary"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold"
+              >
+                Itinerary
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-2"
+              >
+                <ChatCircle size={18} weight="duotone" />
+                Chat
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="sections" className="mt-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-georgia font-bold text-ink section-header-line flex-1">Sections</h3>
-                <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)} className="gap-1.5 ml-3">
-                  <Plus size={14} weight="bold" /> Add
-                </Button>
+            <TabsContent value="details">
+              <div className="space-y-4">
+                <div className="p-4 bg-background rounded-lg border">
+                  <h3 className="font-medium text-sm mb-2">Dates</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {trip.start_date
+                      ? new Date(trip.start_date).toLocaleDateString()
+                      : "Not set"}{" "}
+                    -{" "}
+                    {trip.end_date
+                      ? new Date(trip.end_date).toLocaleDateString()
+                      : "Not set"}
+                  </p>
+                </div>
+
+                {trip.notes && (
+                  <div className="p-4 bg-background rounded-lg border">
+                    <h3 className="font-medium text-sm mb-2">Notes</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {trip.notes}
+                    </p>
+                  </div>
+                )}
               </div>
-              {sections.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No sections yet — add one above</p>
+            </TabsContent>
+
+            <TabsContent value="itinerary">
+              <div className="text-center py-12">
+                <p className="font-georgia italic text-muted-foreground">
+                  Itinerary feature coming soon...
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="chat">
+              {isCrewTrip ? (
+                <TripChat tripId={id!} />
               ) : (
-                sections.map((s) => {
-                  if (s.type === "itinerary") {
-                    return (
-                      <div key={s.id}>
-                        <ItineraryView section={s} tripId={id!} />
-                      </div>
-                    );
-                  }
-
-                  if (s.type === "packing_list") {
-                    return (
-                      <div key={s.id} className="bg-card rounded-lg border p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <ListChecks size={20} weight="duotone" className="text-amber flex-shrink-0" />
-                            <p className="text-sm font-medium text-ink">{s.title || "Packing List"}</p>
-                          </div>
-                          <button
-                            onClick={() => openEditor(s)}
-                            className="text-xs text-muted-foreground hover:text-ink"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                        <PackingList section={s} />
-                      </div>
-                    );
-                  }
-
-                  if (s.type === "notes") {
-                    return (
-                      <div key={s.id}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Scroll size={20} weight="duotone" className="text-amber flex-shrink-0" />
-                          <p className="text-sm font-medium text-ink">{s.title || "Notes"}</p>
-                          <Badge variant="secondary" className="text-[9px] bg-muted/50 text-muted-foreground gap-0.5">
-                            <Lock size={8} weight="fill" /> Private
-                          </Badge>
-                        </div>
-                        <QuickNotes section={s} />
-                      </div>
-                    );
-                  }
-
-                  const Icon = SECTION_ICONS[s.type] || Notepad;
-                  const isPrivate = ALWAYS_PRIVATE_TYPES.includes(s.type) || !s.is_public;
-                  return (
-                    <div
-                      key={s.id}
-                      className="flex items-center gap-3 p-4 bg-card rounded-lg border cursor-pointer hover:bg-accent/30 transition-colors"
-                      onClick={() => openEditor(s)}
-                    >
-                      <Icon size={20} weight="duotone" className="text-amber flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-ink">{s.title || SECTION_TYPE_LABELS[s.type]}</p>
-                        {s.content && typeof s.content === "object" && (
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {JSON.stringify(s.content).slice(0, 80)}...
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant={isPrivate ? "secondary" : "outline"} className={`text-[9px] ${isPrivate ? "bg-muted/50 text-muted-foreground" : "border-teal text-teal"}`}>
-                        {isPrivate ? "Private" : <><Flag size={10} weight="fill" className="inline mr-0.5" />Public</>}
-                      </Badge>
-                    </div>
-                  );
-                })
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 rounded-full bg-amber/10 flex items-center justify-center mx-auto mb-4">
+                    <Users size={32} weight="duotone" className="text-amber" />
+                  </div>
+                  <p className="font-georgia text-lg text-ink mb-2">Chat is for crew trips</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add crew members to this trip to enable chat
+                  </p>
+                </div>
               )}
-            </TabsContent>
-
-            <TabsContent value="arrivals" className="mt-5">
-              <ArrivalTracker tripId={id!} />
-            </TabsContent>
-
-            <TabsContent value="photos" className="mt-5">
-              <PhotoGallery tripId={id!} />
-            </TabsContent>
-
-            <TabsContent value="chat" className="mt-5">
-              <TripChat tripId={id!} />
-            </TabsContent>
-
-            <TabsContent value="map" className="mt-5">
-              {activeTab === "map" && (
-                <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-lg" />}>
-                  <TripMap trip={trip} onEditTrip={() => setEditTripOpen(true)} />
-                </Suspense>
-              )}
-            </TabsContent>
-
-            <TabsContent value="share" className="mt-5">
-              <ShareSettings tripId={id!} />
             </TabsContent>
           </Tabs>
         </div>
-
-        <SectionEditor
-          tripId={id!}
-          open={editorOpen}
-          onOpenChange={setEditorOpen}
-          editSection={editingSection}
-        />
-        <SectionTypePicker
-          open={pickerOpen}
-          onOpenChange={setPickerOpen}
-          existingSections={sections}
-          onSelect={handlePickerSelect}
-        />
-        {trip && <EditTripDialog open={editTripOpen} onOpenChange={setEditTripOpen} trip={trip} />}
       </div>
     </div>
   );
