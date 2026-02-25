@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +11,7 @@ import CreateTripDialog from "@/components/CreateTripDialog";
 import Index from "./pages/Index";
 import Trips from "./pages/Trips";
 import TripDetail from "./pages/TripDetail";
-import GlobePage from "./pages/GlobePage";
+const GlobePage = lazy(() => import("./pages/GlobePage"));
 import PublicSharePage from "./pages/PublicSharePage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -74,7 +74,9 @@ function AppLayout() {
             path="/globe"
             element={
               <ProtectedRoute>
-                <GlobePage />
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="font-georgia italic text-muted-foreground">Loading globe...</p></div>}>
+                  <GlobePage />
+                </Suspense>
               </ProtectedRoute>
             }
           />
