@@ -19,27 +19,24 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
     if (!containerRef.current) return;
 
     // Initialize Globe.gl with proper sizing
-    const globe = Globe()(containerRef.current)
+    const globe = new Globe(containerRef.current)
       .width(containerRef.current.clientWidth)
       .height(containerRef.current.clientHeight)
       .backgroundColor("rgba(0,0,0,0)")
       .showAtmosphere(true)
       .atmosphereColor("#C8A96E")
       .atmosphereAltitude(0.15)
-      // Real Earth satellite textures
       .globeImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg")
       .bumpImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-topology.png")
-      // Auto-rotation
-      .controls({
-        autoRotate: true,
-        autoRotateSpeed: 0.4,
-        enableZoom: false,
-      });
+      .pointOfView({ altitude: 2.0 });
 
     globeRef.current = globe;
 
-    // Set camera position - 2.0 for good balance (was 1.8, too big)
-    globe.pointOfView({ altitude: 2.0 });
+    // Auto-rotation via controls
+    const controls = globe.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.4;
+    controls.enableZoom = false;
 
     // Handle window resize
     const handleResize = () => {
