@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,8 +25,9 @@ interface CrewMember {
 
 export default function CreateTripDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const [name, setName] = useState("");
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -52,20 +54,17 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(crewEmail)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
-    // Check if already added
-    if (crewMembers.some(m => m.email === crewEmail.toLowerCase())) {
+    if (crewMembers.some((m) => m.email === crewEmail.toLowerCase())) {
       toast.error("This person is already in the crew");
       return;
     }
 
-    // Don't allow adding yourself
     if (crewEmail.toLowerCase() === user?.email?.toLowerCase()) {
       toast.error("You're automatically added as the trip owner");
       return;
@@ -73,30 +72,12 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
     setSearching(true);
     try {
-      // Try to find user in profiles
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, display_name, avatar_url')
-        .limit(1000);
-
-      // For now, just add by email (in production, you'd have proper user search)
       setCrewMembers([
         ...crewMembers,
         {
-          user_id: '',
+          user_id: "",
           email: crewEmail.toLowerCase(),
-        }
-      ]);
-      setCrewEmail("");
-      toast.success(`📧 ${crewEmail} will be invited when you create the trip`);
-    } catch (error) {
-      console.error("Error searching user:", error);
-      setCrewMembers([
-        ...crewMembers,
-        {
-          user_id: '',
-          email: crewEmail.toLowerCase(),
-        }
+        },
       ]);
       setCrewEmail("");
       toast.success(`📧 ${crewEmail} added to crew list`);
@@ -106,7 +87,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
   };
 
   const removeCrew = (email: string) => {
-    setCrewMembers(crewMembers.filter(m => m.email !== email));
+    setCrewMembers(crewMembers.filter((m) => m.email !== email));
     toast.success("Removed from crew");
   };
 
@@ -120,41 +101,24 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
     setCreating(true);
     try {
-      // 1. Create the trip - USING created_by instead of user_id
+      // Create the trip
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
-          created_by: user!.id,  // ✅ FIXED: using created_by
-          name,
-          destination,
+          created_by: user!.id,
+          name: name.trim(),
+          destination: destination.trim(),
           start_date: startDate || null,
           end_date: endDate || null,
         })
         .select()
         .single();
 
-      if (tripError) {
-        console.error("Trip creation error:", tripError);
-        throw tripError;
-      }
+      if (tripError) throw tripError;
 
-      // 2. Add crew members (if crew trip)
+      // Add crew members if crew trip (future enhancement)
       if (isCrewTrip && crewMembers.length > 0) {
-        // Note: In production, you'd want to:
-        // - Send email invites to users who don't have accounts
-        // - Add users who have accounts to trip_crew
-        // For now, we'll just try to add them if they exist
-        
-        for (const member of crewMembers) {
-          if (member.user_id) {
-            await supabase.from('trip_crew').insert({
-              trip_id: trip.id,
-              user_id: member.user_id,
-              role: 'member',
-            });
-          }
-        }
-        
+        // TODO: Implement crew member invites
         toast.success(`⚓ Trip created with ${crewMembers.length} crew members!`);
       } else {
         toast.success("⚓ Trip created!");
@@ -163,9 +127,12 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
       queryClient.invalidateQueries({ queryKey: ["trips"] });
       handleReset();
       onOpenChange(false);
+
+      // Navigate to the new trip
+      navigate(`/trip/${trip.id}`);
     } catch (error: any) {
       console.error("Error creating trip:", error);
-      toast.error(`Failed to create trip: ${error.message || 'Unknown error'}`);
+      toast.error(error.message || "Failed to create trip");
     } finally {
       setCreating(false);
     }
@@ -201,30 +168,17 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
               onChange={(e) => setDestination(e.target.value)}
               required
             />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Enter city and country for best results
-            </p>
           </div>
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
 
@@ -237,17 +191,14 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
                 <p className="text-xs text-muted-foreground">Invite friends to collaborate on this adventure</p>
               </div>
             </div>
-            <Switch
-              checked={isCrewTrip}
-              onCheckedChange={setIsCrewTrip}
-            />
+            <Switch checked={isCrewTrip} onCheckedChange={setIsCrewTrip} />
           </div>
 
           {/* Crew Members Section */}
           {isCrewTrip && (
             <div className="space-y-3 p-4 border rounded-lg bg-card">
               <Label className="text-sm font-medium">Add Crew Members</Label>
-              
+
               {/* Search Input */}
               <div className="flex gap-2">
                 <Input
@@ -255,19 +206,13 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
                   value={crewEmail}
                   onChange={(e) => setCrewEmail(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       searchUser();
                     }
                   }}
                 />
-                <Button
-                  type="button"
-                  onClick={searchUser}
-                  disabled={searching}
-                  variant="outline"
-                  className="gap-2"
-                >
+                <Button type="button" onClick={searchUser} disabled={searching} variant="outline" className="gap-2">
                   <MagnifyingGlass size={16} />
                   {searching ? "..." : "Add"}
                 </Button>
@@ -277,7 +222,7 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
               {crewMembers.length > 0 && (
                 <div className="space-y-2 mt-4">
                   <p className="text-xs text-muted-foreground">
-                    {crewMembers.length} crew member{crewMembers.length !== 1 ? 's' : ''} added
+                    {crewMembers.length} crew member{crewMembers.length !== 1 ? "s" : ""} added
                   </p>
                   {crewMembers.map((member) => (
                     <div
@@ -285,25 +230,10 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
                       className="flex items-center justify-between p-2 bg-background rounded border"
                     >
                       <div className="flex items-center gap-2">
-                        {member.avatar_url ? (
-                          <img
-                            src={member.avatar_url}
-                            alt={member.display_name || member.email}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-amber/10 flex items-center justify-center">
-                            <Users size={16} className="text-amber" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">
-                            {member.display_name || member.email}
-                          </p>
-                          {member.display_name && (
-                            <p className="text-xs text-muted-foreground">{member.email}</p>
-                          )}
+                        <div className="w-8 h-8 rounded-full bg-amber/10 flex items-center justify-center">
+                          <Users size={16} className="text-amber" />
                         </div>
+                        <p className="text-sm font-medium">{member.email}</p>
                       </div>
                       <button
                         type="button"
