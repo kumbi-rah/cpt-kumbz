@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Anchor, X, Users, MagnifyingGlass } from "@phosphor-icons/react";
+import { Anchor, X, Users, MagnifyingGlass, MapPin } from "@phosphor-icons/react";
 
 interface Props {
   open: boolean;
@@ -23,6 +23,12 @@ interface CrewMember {
   avatar_url?: string;
 }
 
+interface LocationSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 export default function CreateTripDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -30,6 +36,12 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
   const [name, setName] = useState("");
   const [destination, setDestination] = useState("");
+  const [destinationLat, setDestinationLat] = useState<number | null>(null);
+  const [destinationLng, setDestinationLng] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isCrewTrip, setIsCrewTrip] = useState(false);
@@ -41,11 +53,60 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
   const handleReset = () => {
     setName("");
     setDestination("");
+    setDestinationLat(null);
+    setDestinationLng(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
     setStartDate("");
     setEndDate("");
     setIsCrewTrip(false);
     setCrewEmail("");
     setCrewMembers([]);
+  };
+
+  // Debounced destination search
+  const searchDestination = async (query: string) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setSearchingLocation(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+      );
+      const data = await response.json();
+      setSuggestions(data);
+      setShowSuggestions(data.length > 0);
+    } catch (error) {
+      console.error("Error searching location:", error);
+    } finally {
+      setSearchingLocation(false);
+    }
+  };
+
+  const handleDestinationChange = (value: string) => {
+    setDestination(value);
+    // Clear coordinates when manually typing
+    setDestinationLat(null);
+    setDestinationLng(null);
+
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      searchDestination(value);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  const selectSuggestion = (suggestion: LocationSuggestion) => {
+    setDestination(suggestion.display_name);
+    setDestinationLat(parseFloat(suggestion.lat));
+    setDestinationLng(parseFloat(suggestion.lon));
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const searchUser = async () => {
@@ -101,13 +162,15 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
     setCreating(true);
     try {
-      // Create the trip
+      // Create the trip with coordinates
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
           created_by: user!.id,
           name: name.trim(),
           destination: destination.trim(),
+          lat: destinationLat,
+          lng: destinationLng,
           start_date: startDate || null,
           end_date: endDate || null,
         })
@@ -118,7 +181,6 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
 
       // Add crew members if crew trip (future enhancement)
       if (isCrewTrip && crewMembers.length > 0) {
-        // TODO: Implement crew member invites
         toast.success(`⚓ Trip created with ${crewMembers.length} crew members!`);
       } else {
         toast.success("⚓ Trip created!");
@@ -158,16 +220,53 @@ export default function CreateTripDialog({ open, onOpenChange }: Props) {
             />
           </div>
 
-          {/* Destination */}
-          <div>
+          {/* Destination with Autocomplete */}
+          <div className="relative">
             <Label htmlFor="destination">Destination *</Label>
-            <Input
-              id="destination"
-              placeholder="e.g., Medellín, Colombia"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="destination"
+                placeholder="Start typing... (e.g., Medellín, Colombia)"
+                value={destination}
+                onChange={(e) => handleDestinationChange(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                required
+                className="pr-10"
+              />
+              {searchingLocation && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-amber border-t-transparent rounded-full" />
+                </div>
+              )}
+              {destinationLat && destinationLng && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <MapPin size={18} weight="fill" className="text-green-600" />
+                </div>
+              )}
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => selectSuggestion(suggestion)}
+                    className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b last:border-b-0 flex items-start gap-2"
+                  >
+                    <MapPin size={18} weight="duotone" className="text-amber mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{suggestion.display_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {destinationLat && destinationLng
+                ? `✓ Coordinates found (${destinationLat.toFixed(4)}, ${destinationLng.toFixed(4)})`
+                : "Type at least 3 characters to search"}
+            </p>
           </div>
 
           {/* Dates */}
