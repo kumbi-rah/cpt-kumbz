@@ -117,7 +117,7 @@ function TimelineItem({
         item_time: vals.item_time || null,
         activity: vals.activity,
         description: vals.description || null,
-      })
+      } as any)
       .eq("id", item.id);
     if (error) {
       toast.error("⚓ Failed to update item — try again");
@@ -270,7 +270,7 @@ export default function ItineraryView({ section, tripId, readOnly }: Props) {
 
   const handleAddStop = async (dayNumber: number, vals: { item_time: string; activity: string; description: string }) => {
     const dayItems = items.filter((it) => it.day_number === dayNumber);
-    const maxSort = dayItems.length > 0 ? Math.max(...dayItems.map((it) => it.sort_order ?? 0)) : -1;
+    const maxSort = dayItems.length > 0 ? Math.max(...dayItems.map((it) => (it as any).sort_order ?? 0)) : -1;
     createItem.mutate(
       {
         trip_id: tripId,
@@ -279,7 +279,7 @@ export default function ItineraryView({ section, tripId, readOnly }: Props) {
         activity: vals.activity,
         description: vals.description || null,
         sort_order: maxSort + 1,
-      },
+      } as any,
       {
         onSuccess: () => { setAddingDay(null); setAddingNewDay(false); },
         onError: () => toast.error("⚓ Failed to add item"),
