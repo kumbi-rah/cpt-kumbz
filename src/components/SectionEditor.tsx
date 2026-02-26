@@ -50,7 +50,7 @@ export default function SectionEditor({ tripId, open, onOpenChange, editSection 
       if (editSection.type === "itinerary") {
         // Load from DB items
         if (dbItems.length > 0) {
-          setItems(dbItems.map((it) => ({
+          setItems(dbItems.map((it: any) => ({
             day_number: it.day_number,
             item_time: it.item_time || "",
             activity: it.activity,

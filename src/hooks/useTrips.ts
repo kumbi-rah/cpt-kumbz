@@ -6,7 +6,14 @@ export type Trip = Tables<"trips">;
 export type TripSection = Tables<"trip_sections">;
 export type Arrival = Tables<"arrivals">;
 export type TripPhoto = Tables<"trip_photos">;
-export type ItineraryItem = Tables<"itinerary_items">;
+// The auto-generated types.ts is stale — actual DB has item_time, description, sort_order, completed
+// We extend the generated type to match the real schema.
+export type ItineraryItem = Tables<"itinerary_items"> & {
+  item_time?: string | null;
+  description?: string | null;
+  sort_order?: number;
+  completed?: boolean;
+};
 
 // ── Trips ──
 
@@ -300,7 +307,7 @@ export function useItineraryItems(tripId: string) {
         .order("day_number")
         .order("sort_order");
       if (error) throw error;
-      return data as ItineraryItem[];
+      return data as unknown as ItineraryItem[];
     },
     enabled: !!tripId,
   });
@@ -310,7 +317,7 @@ export function useToggleItineraryCompleted() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      const { error } = await supabase.from("itinerary_items").update({ completed }).eq("id", id);
+      const { error } = await supabase.from("itinerary_items").update({ completed } as any).eq("id", id);
       if (error) throw error;
     },
     onMutate: async ({ id, completed }) => {
@@ -337,7 +344,7 @@ export function useToggleItineraryCompleted() {
 export function useCreateItineraryItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (item: TablesInsert<"itinerary_items">) => {
+    mutationFn: async (item: any) => {
       const { data, error } = await supabase.from("itinerary_items").insert(item).select().single();
       if (error) throw error;
       return data;
@@ -379,7 +386,7 @@ export function useBulkSaveItineraryItems() {
           description: it.description || null,
           sort_order: it.sort_order,
         }));
-        const { error: insErr } = await supabase.from("itinerary_items").insert(rows);
+        const { error: insErr } = await supabase.from("itinerary_items").insert(rows as any);
         if (insErr) throw insErr;
       }
     },
