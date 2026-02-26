@@ -24,15 +24,15 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
           <p className="font-georgia italic text-2xl md:text-3xl text-primary-foreground mb-4">No voyages ahead, Captain</p>
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-georgia text-base hover:bg-primary/90 transition-colors"
-          >
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-georgia text-base hover:bg-primary/90 transition-colors">
+
             <Anchor size={18} weight="bold" />
             Chart Your First Adventure
           </button>
         </div>
         <ParchmentCorners />
-      </div>
-    );
+      </div>);
+
   }
 
   const status = getTripStatus(trip.start_date, trip.end_date);
@@ -58,62 +58,62 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
   return (
     <div
       className="relative w-full h-[195px] md:h-[270px] rounded-2xl overflow-hidden cursor-pointer group"
-      onClick={() => navigate(`/trip/${trip.id}`)}
-    >
+      onClick={() => navigate(`/trip/${trip.id}`)}>
+
       {/* Background */}
-      {hasCover ? (
-        <>
+      {hasCover ?
+      <>
           <img
-            src={trip.cover_photo_url!}
-            alt={trip.name}
-            className="absolute inset-0 w-full h-full object-cover vintage-filter"
-          />
+          src={trip.cover_photo_url!}
+          alt={trip.name}
+          className="absolute inset-0 w-full h-full object-cover vintage-filter" />
+
           <div className="vignette-overlay" />
-        </>
-      ) : (
-        <>
+        </> :
+
+      <>
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #C8A96E, #8B6914)" }} />
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.06]">
             <CompassRose size={200} className="text-foreground" />
           </div>
         </>
-      )}
+      }
 
       {/* Bottom gradient overlay - stronger for better text readability */}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(42,34,24,0.88) 0%, rgba(42,34,24,0.5) 50%, transparent 70%)" }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 z-10">
-        <p className="font-cinzel text-[10px] md:text-[11px] uppercase tracking-[3px] text-primary mb-2">
+        <p className="font-cinzel text-[10px] uppercase tracking-[3px] text-primary mb-2 md:text-2xl">
           Next Adventure
         </p>
-        <h2 className="font-georgia font-bold text-[26px] md:text-[38px] leading-tight" style={{ color: "#F2EDE4" }}>
+        <h2 className="font-georgia font-bold text-[26px] leading-tight md:text-6xl" style={{ color: "#F2EDE4" }}>
           {trip.name}
         </h2>
-        {trip.destination && (
-          <p className="text-[15px] md:text-[16px] mt-2" style={{ color: "hsl(36 13% 60%)" }}>
+        {trip.destination &&
+        <p className="text-[15px] mt-2 md:text-2xl" style={{ color: "hsl(36 13% 60%)" }}>
             {formatDestination(trip.destination)}
           </p>
-        )}
-        {countdownText && (
-          <span
-            className={`inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}
-          >
+        }
+        {countdownText &&
+        <span
+          className={`inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}>
+
             {countdownText}
           </span>
-        )}
+        }
       </div>
 
       {/* View Trip button */}
       <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-10">
-        <span className="font-georgia text-sm md:text-base text-primary-foreground/90 group-hover:text-primary-foreground transition-colors drop-shadow-md">
+        <span className="font-georgia text-sm text-primary-foreground/90 group-hover:text-primary-foreground transition-colors drop-shadow-md md:text-2xl">
           View Trip →
         </span>
       </div>
 
       <ParchmentCorners />
-    </div>
-  );
+    </div>);
+
 }
 
 function ParchmentCorners() {
@@ -149,6 +149,6 @@ function ParchmentCorners() {
           <path d="M32,32 L8,32 L32,8 Z" fill={color} opacity="0.3" />
         </svg>
       </div>
-    </>
-  );
+    </>);
+
 }
