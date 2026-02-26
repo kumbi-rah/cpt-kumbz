@@ -5,33 +5,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDestination } from "@/lib/formatDestination";
+import TripDetails from "@/components/TripDetails";
+import TripItinerary from "@/components/TripItinerary";
+import TripLodging from "@/components/TripLodging";
+import TripPacking from "@/components/TripPacking";
+import TripCrew from "@/components/TripCrew";
 import TripChat from "@/components/TripChat";
-import { Users, User, ChatCircle } from "@phosphor-icons/react";
-
-interface Crew {
-  user_id: string;
-  role: string;
-  user_profile?: {
-    display_name: string;
-    avatar_url: string | null;
-  };
-}
+import { FileText, MapTrifold, House, Backpack, Users, ChatCircle } from "@phosphor-icons/react";
 
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [trip, setTrip] = useState<any>(null);
-  const [crew, setCrew] = useState<Crew[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [isCrewTrip, setIsCrewTrip] = useState(false);
 
   useEffect(() => {
     if (id) {
-      loadTripAndCrew();
+      loadTrip();
     }
   }, [id]);
 
-  const loadTripAndCrew = async () => {
+  const loadTrip = async () => {
     if (!id) return;
 
     setLoading(true);
@@ -47,25 +43,13 @@ export default function TripDetail() {
       setTrip(tripData);
       setIsOwner(tripData.created_by === user?.id);
 
-      // Load crew with separate profile fetch
-      const { data: crewData, error: crewError } = await supabase
+      // Check if crew trip
+      const { data: crewData } = await supabase
         .from("trip_crew")
-        .select("user_id, role")
+        .select("id")
         .eq("trip_id", id);
 
-      if (crewError) throw crewError;
-
-      const userIds = (crewData || []).map((c) => c.user_id);
-      const { data: profiles } = userIds.length
-        ? await supabase.from("user_profiles").select("user_id, display_name, avatar_url").in("user_id", userIds)
-        : { data: [] };
-
-      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      const enrichedCrew: Crew[] = (crewData || []).map((c) => ({
-        ...c,
-        user_profile: profileMap.get(c.user_id) as Crew["user_profile"],
-      }));
-      setCrew(enrichedCrew);
+      setIsCrewTrip((crewData?.length || 0) > 1);
     } catch (error) {
       console.error("Error loading trip:", error);
     } finally {
@@ -91,8 +75,6 @@ export default function TripDetail() {
       </div>
     );
   }
-
-  const isCrewTrip = crew.length > 1; // More than just owner
 
   return (
     <div className="min-h-screen pb-nav">
@@ -134,112 +116,76 @@ export default function TripDetail() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-5 -mt-8">
         <div className="bg-card rounded-2xl shadow-lg border p-5 md:p-6">
-          {/* Crew Banner (if crew trip) */}
-          {isCrewTrip && (
-            <div className="mb-6 p-4 bg-amber/5 border border-amber/20 rounded-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <Users size={24} weight="duotone" className="text-amber" />
-                <div>
-                  <p className="font-medium text-sm">Crew Trip</p>
-                  <p className="text-xs text-muted-foreground">
-                    {crew.length} crew member{crew.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-
-              {/* Crew List */}
-              <div className="flex flex-wrap gap-3">
-                {crew.map((member) => (
-                  <div
-                    key={member.user_id}
-                    className="flex items-center gap-2 bg-background px-3 py-2 rounded-lg border"
-                  >
-                    {member.user_profile?.avatar_url ? (
-                      <img
-                        src={member.user_profile.avatar_url}
-                        alt={member.user_profile.display_name}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-amber/10 flex items-center justify-center">
-                        <User size={16} weight="duotone" className="text-amber" />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">
-                        {member.user_profile?.display_name || 'Unknown'}
-                      </p>
-                      {member.role === 'owner' && (
-                        <span className="text-xs bg-amber/20 text-amber px-2 py-0.5 rounded-full font-medium">
-                          Owner
-                        </span>
-                      )}
-                      {member.user_id === user?.id && member.role !== 'owner' && (
-                        <span className="text-xs text-muted-foreground">(You)</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Tabs */}
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger
                 value="details"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
               >
+                <FileText size={16} weight="duotone" className="hidden md:block" />
                 Details
               </TabsTrigger>
               <TabsTrigger
                 value="itinerary"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
               >
+                <MapTrifold size={16} weight="duotone" className="hidden md:block" />
                 Itinerary
               </TabsTrigger>
               <TabsTrigger
-                value="chat"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-2"
+                value="lodging"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
               >
-                <ChatCircle size={18} weight="duotone" />
+                <House size={16} weight="duotone" className="hidden md:block" />
+                Lodging
+              </TabsTrigger>
+              <TabsTrigger
+                value="packing"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+              >
+                <Backpack size={16} weight="duotone" className="hidden md:block" />
+                Packing
+              </TabsTrigger>
+              <TabsTrigger
+                value="crew"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+              >
+                <Users size={16} weight="duotone" className="hidden md:block" />
+                Crew
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+              >
+                <ChatCircle size={16} weight="duotone" className="hidden md:block" />
                 Chat
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="details">
-              <div className="space-y-4">
-                <div className="p-4 bg-background rounded-lg border">
-                  <h3 className="font-medium text-sm mb-2">Dates</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {trip.start_date
-                      ? new Date(trip.start_date).toLocaleDateString()
-                      : "Not set"}{" "}
-                    -{" "}
-                    {trip.end_date
-                      ? new Date(trip.end_date).toLocaleDateString()
-                      : "Not set"}
-                  </p>
-                </div>
-
-                {trip.notes && (
-                  <div className="p-4 bg-background rounded-lg border">
-                    <h3 className="font-medium text-sm mb-2">Notes</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {trip.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
+              <TripDetails trip={trip} isOwner={isOwner} onUpdate={loadTrip} />
             </TabsContent>
 
             <TabsContent value="itinerary">
-              <div className="text-center py-12">
-                <p className="font-georgia italic text-muted-foreground">
-                  Itinerary feature coming soon...
-                </p>
-              </div>
+              <TripItinerary
+                tripId={id!}
+                tripStartDate={trip.start_date}
+                tripEndDate={trip.end_date}
+                isOwner={isOwner}
+              />
+            </TabsContent>
+
+            <TabsContent value="lodging">
+              <TripLodging tripId={id!} isOwner={isOwner} />
+            </TabsContent>
+
+            <TabsContent value="packing">
+              <TripPacking tripId={id!} isOwner={isOwner} />
+            </TabsContent>
+
+            <TabsContent value="crew">
+              <TripCrew tripId={id!} isOwner={isOwner} />
             </TabsContent>
 
             <TabsContent value="chat">
@@ -252,7 +198,7 @@ export default function TripDetail() {
                   </div>
                   <p className="font-georgia text-lg text-ink mb-2">Chat is for crew trips</p>
                   <p className="text-sm text-muted-foreground">
-                    Add crew members to this trip to enable chat
+                    Add crew members to enable chat
                   </p>
                 </div>
               )}
