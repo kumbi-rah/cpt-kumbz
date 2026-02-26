@@ -52,36 +52,39 @@ export type Database = {
       itinerary_items: {
         Row: {
           activity: string
-          completed: boolean | null
           created_at: string | null
+          day_date: string | null
           day_number: number
-          description: string | null
+          display_order: number
           id: string
-          item_time: string | null
-          sort_order: number | null
-          trip_id: string | null
+          notes: string | null
+          time: string
+          trip_id: string
+          updated_at: string | null
         }
         Insert: {
           activity: string
-          completed?: boolean | null
           created_at?: string | null
+          day_date?: string | null
           day_number: number
-          description?: string | null
+          display_order?: number
           id?: string
-          item_time?: string | null
-          sort_order?: number | null
-          trip_id?: string | null
+          notes?: string | null
+          time: string
+          trip_id: string
+          updated_at?: string | null
         }
         Update: {
           activity?: string
-          completed?: boolean | null
           created_at?: string | null
+          day_date?: string | null
           day_number?: number
-          description?: string | null
+          display_order?: number
           id?: string
-          item_time?: string | null
-          sort_order?: number | null
-          trip_id?: string | null
+          notes?: string | null
+          time?: string
+          trip_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -150,6 +153,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trip_crew_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_lodging: {
+        Row: {
+          address: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string | null
+          display_order: number
+          id: string
+          listing_link: string | null
+          name: string
+          notes: string | null
+          trip_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          listing_link?: string | null
+          name: string
+          notes?: string | null
+          trip_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          listing_link?: string | null
+          name?: string
+          notes?: string | null
+          trip_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_lodging_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -290,6 +343,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           name: string
+          packing_list: string | null
           share_enabled: boolean | null
           share_token: string
           start_date: string | null
@@ -306,6 +360,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name: string
+          packing_list?: string | null
           share_enabled?: boolean | null
           share_token?: string
           start_date?: string | null
@@ -322,6 +377,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name?: string
+          packing_list?: string | null
           share_enabled?: boolean | null
           share_token?: string
           start_date?: string | null
@@ -396,7 +452,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_can_view_trip: { Args: { trip_id_param: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
