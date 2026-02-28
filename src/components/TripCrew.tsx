@@ -86,9 +86,40 @@ export default function TripCrew({ tripId, isOwner }: Props) {
 
     setSearching(true);
     try {
-      toast.success(`📧 Invite sent to ${email}`);
+      // Look up user by email using the RPC function
+      const { data: userId, error: lookupError } = await (supabase.rpc as any)(
+        "get_user_id_by_email",
+        { email_param: email.toLowerCase() }
+      );
+
+      if (lookupError || !userId) {
+        toast.error("No account found with that email. They need to sign up first.");
+        return;
+      }
+
+      // Check if already in crew
+      const { data: existing } = await supabase
+        .from("trip_crew")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId);
+
+      if (existing && existing.length > 0) {
+        toast.error("This person is already in the crew");
+        return;
+      }
+
+      // Add to crew
+      const { error: insertError } = await supabase
+        .from("trip_crew")
+        .insert({ trip_id: tripId, user_id: userId, role: "member" });
+
+      if (insertError) throw insertError;
+
+      toast.success(`✅ Crew member added!`);
       setEmail("");
       setAdding(false);
+      loadCrew();
     } catch (error) {
       console.error("Error adding crew:", error);
       toast.error("Failed to add crew member");
