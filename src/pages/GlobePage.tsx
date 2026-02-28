@@ -107,13 +107,13 @@ export default function GlobePage() {
         </div>
 
         {/* Globe container */}
-        <div className="min-h-[240px] max-h-[300px] md:min-h-[500px] md:max-h-none lg:min-h-[700px] relative w-full px-5">
+        <div className="h-[210px] sm:h-[240px] md:h-[500px] lg:h-[700px] relative w-full px-5">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Skeleton className="w-80 h-80 rounded-full" />
             </div>
           ) : (
-            <div className="w-full h-full">
+            <div className="w-full h-full max-w-[320px] sm:max-w-[420px] md:max-w-none mx-auto">
               <GlobeScene
                 trips={filteredTrips}
                 onTripClick={(id) => navigate(`/trip/${id}`)}

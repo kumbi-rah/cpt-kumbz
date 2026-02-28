@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { MapPin, Moon, Sun, FloppyDisk } from "@phosphor-icons/react";
+import { MapPin, Moon, Sun, FloppyDisk, SignOut } from "@phosphor-icons/react";
 
 interface GeoResult {
   display_name: string;
@@ -15,7 +15,7 @@ interface GeoResult {
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [homeCity, setHomeCity] = useState("");
   const [homeLat, setHomeLat] = useState("");
   const [homeLng, setHomeLng] = useState("");
@@ -127,6 +127,16 @@ export default function Settings() {
     const t = checked ? "dark" : "light";
     setTheme(t);
     applyTheme(t);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("👋 Logged out");
+    } catch (err) {
+      console.error("Failed to log out:", err);
+      toast.error("Failed to log out");
+    }
   };
 
   // Debounced city search for autocomplete
@@ -266,8 +276,17 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end">
+          {/* Actions */}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              className="gap-2 px-6 py-3 text-base"
+            >
+              <SignOut size={18} weight="bold" />
+              Log Out
+            </Button>
             <Button
               onClick={saveSettings}
               disabled={saving}
