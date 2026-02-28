@@ -216,7 +216,7 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
         width: "100%",
         height: "100%",
         cursor: "grab",
-        minHeight: "600px",
+        minHeight: "320px",
       }}
     />
   );
