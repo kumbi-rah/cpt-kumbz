@@ -19,6 +19,8 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
     if (!containerRef.current) return;
 
     // Initialize Globe.gl with proper sizing
+    const initialAltitude = window.innerWidth < 768 ? 3.2 : 2.0;
+
     const globe = new Globe(containerRef.current)
       .width(containerRef.current.clientWidth)
       .height(containerRef.current.clientHeight)
@@ -28,7 +30,7 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
       .atmosphereAltitude(0.15)
       .globeImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg")
       .bumpImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-topology.png")
-      .pointOfView({ altitude: 2.0 });
+      .pointOfView({ altitude: initialAltitude });
 
     globeRef.current = globe;
 
@@ -216,7 +218,7 @@ export default function GlobeScene({ trips, onTripClick, homeLocation }: GlobeSc
         width: "100%",
         height: "100%",
         cursor: "grab",
-        minHeight: "240px",
+        minHeight: "0px",
       }}
     />
   );
