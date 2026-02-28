@@ -4,6 +4,7 @@ import CompassRose from "@/components/icons/CompassRose";
 import TreasureMapScroll from "@/components/icons/TreasureMapScroll";
 import ShipsWheel from "@/components/icons/ShipsWheel";
 import AnchorIcon from "@/components/icons/AnchorIcon";
+import { Settings } from "lucide-react";
 
 interface Props {
   onCreateClick?: () => void;
@@ -17,6 +18,7 @@ export default function BottomNav({ onCreateClick }: Props) {
   const isHome = path === "/";
   const isTrips = path === "/trips";
   const isGlobe = path === "/globe";
+  const isSettings = path === "/settings";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-nav border-t border-border md:hidden">
@@ -59,6 +61,15 @@ export default function BottomNav({ onCreateClick }: Props) {
         >
           <ShipsWheel size={24} />
           <span className="text-[10px] font-medium">Globe</span>
+        </button>
+
+        {/* Settings */}
+        <button
+          onClick={() => navigate("/settings")}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isSettings ? "text-amber" : "text-muted-foreground"}`}
+        >
+          <Settings size={22} />
+          <span className="text-[10px] font-medium">Settings</span>
         </button>
       </div>
     </nav>
