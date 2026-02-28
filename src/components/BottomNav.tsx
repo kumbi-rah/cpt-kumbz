@@ -24,7 +24,7 @@ export default function BottomNav({ onCreateClick }: Props) {
         {/* Home */}
         <button
           onClick={() => navigate("/")}
-          className={`flex flex-col items-center gap-0.5 transition-colors ${isHome ? "text-amber" : "text-muted"}`}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isHome ? "text-amber" : "text-muted-foreground"}`}
         >
           <CompassRose size={24} />
           <span className="text-[10px] font-medium">Home</span>
@@ -33,7 +33,7 @@ export default function BottomNav({ onCreateClick }: Props) {
         {/* Trips */}
         <button
           onClick={() => navigate("/trips")}
-          className={`flex flex-col items-center gap-0.5 transition-colors ${isTrips ? "text-amber" : "text-muted"}`}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isTrips ? "text-amber" : "text-muted-foreground"}`}
         >
           <TreasureMapScroll size={24} />
           <span className="text-[10px] font-medium">Trips</span>
@@ -55,7 +55,7 @@ export default function BottomNav({ onCreateClick }: Props) {
         {/* Globe */}
         <button
           onClick={() => navigate("/globe")}
-          className={`flex flex-col items-center gap-0.5 transition-colors ${isGlobe ? "text-amber" : "text-muted"}`}
+          className={`flex flex-col items-center gap-0.5 transition-colors ${isGlobe ? "text-amber" : "text-muted-foreground"}`}
         >
           <ShipsWheel size={24} />
           <span className="text-[10px] font-medium">Globe</span>
