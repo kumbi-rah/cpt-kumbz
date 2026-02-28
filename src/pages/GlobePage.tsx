@@ -107,7 +107,7 @@ export default function GlobePage() {
         </div>
 
         {/* Globe container */}
-        <div className="flex-1 min-h-[320px] md:min-h-[500px] lg:min-h-[700px] relative w-full px-5">
+        <div className="min-h-[240px] max-h-[300px] md:min-h-[500px] md:max-h-none lg:min-h-[700px] relative w-full px-5">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Skeleton className="w-80 h-80 rounded-full" />
