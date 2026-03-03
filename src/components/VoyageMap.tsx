@@ -21,12 +21,10 @@ export default function VoyageMap({ trips, onTripClick, homeLocation }: Props) {
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      // Use a light/vintage style — Mapbox "outdoors" base then restyle via paint
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/outdoors-v12",
       center: [20, 20],
       zoom: 1.3,
       accessToken: token,
-      projection: "mercator" as any,
       maxZoom: 6,
       minZoom: 1,
     });
