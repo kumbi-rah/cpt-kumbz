@@ -87,11 +87,11 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
         <p className="font-cinzel text-[10px] uppercase tracking-[3px] text-primary mb-2 md:text-2xl">
           Next Adventure
         </p>
-        <h2 className="font-georgia font-bold text-[26px] leading-tight md:text-6xl" style={{ color: "#F2EDE4" }}>
+        <h2 className="font-georgia font-bold text-[26px] leading-tight md:text-6xl text-shadow-cover" style={{ color: "#F2EDE4" }}>
           {trip.name}
         </h2>
         {trip.destination &&
-        <p className="text-[15px] mt-2 md:text-2xl" style={{ color: "hsl(36 13% 60%)" }}>
+        <p className="text-[15px] mt-2 md:text-2xl text-shadow-cover" style={{ color: "hsl(36 13% 60%)" }}>
             {formatDestination(trip.destination)}
           </p>
         }

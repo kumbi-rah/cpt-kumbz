@@ -1,11 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Pencil, Camera, MapPin, Calendar } from "@phosphor-icons/react";
+import { Pencil, Camera, MapPin, Calendar, Trash } from "@phosphor-icons/react";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Trip {
   id: string;
@@ -23,8 +35,10 @@ interface Props {
 }
 
 export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: trip.name,
     destination: trip.destination || "",
@@ -112,6 +126,32 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
     }
   };
 
+  const deleteTrip = async () => {
+    setDeleting(true);
+    try {
+      // Delete related records first
+      const tables = [
+        'arrivals', 'trip_sections', 'itinerary_items',
+        'trip_lodging', 'trip_messages', 'trip_crew', 'trip_photos'
+      ] as const;
+
+      for (const table of tables) {
+        await supabase.from(table).delete().eq('trip_id', trip.id);
+      }
+
+      const { error } = await supabase.from('trips').delete().eq('id', trip.id);
+      if (error) throw error;
+
+      toast.success('Trip deleted');
+      navigate('/trips');
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      toast.error('Failed to delete trip');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
@@ -125,7 +165,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
       </div>
 
       {editing ? (
-        // Edit Mode
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
           <div>
             <Label htmlFor="name">Trip Name *</Label>
@@ -136,7 +175,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
               placeholder="e.g., Colombia 2026"
             />
           </div>
-
           <div>
             <Label htmlFor="destination">Destination</Label>
             <Input
@@ -146,7 +184,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
               placeholder="e.g., Medellín, Colombia"
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="start_date">Start Date</Label>
@@ -167,7 +204,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
               />
             </div>
           </div>
-
           <div className="flex gap-2 pt-2">
             <Button onClick={saveDetails} className="gap-2 bg-amber hover:bg-amber/90">
               Save Changes
@@ -178,7 +214,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
           </div>
         </div>
       ) : (
-        // View Mode
         <div className="space-y-6">
           {/* Basic Info Card */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
@@ -187,7 +222,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
                 <p className="text-sm text-muted-foreground mb-1">Trip Name</p>
                 <p className="font-georgia text-xl font-bold text-ink">{trip.name}</p>
               </div>
-
               {trip.destination && (
                 <div className="flex items-start gap-2">
                   <MapPin size={20} weight="duotone" className="text-amber mt-0.5" />
@@ -197,7 +231,6 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
                   </div>
                 </div>
               )}
-
               {(trip.start_date || trip.end_date) && (
                 <div className="flex items-start gap-2">
                   <Calendar size={20} weight="duotone" className="text-amber mt-0.5" />
@@ -242,14 +275,9 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
                   className="hidden"
                 />
               </div>
-
               {trip.cover_photo_url ? (
                 <div className="relative aspect-video rounded-lg overflow-hidden border">
-                  <img
-                    src={trip.cover_photo_url}
-                    alt="Cover"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={trip.cover_photo_url} alt="Cover" className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted">
@@ -269,12 +297,40 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
                 <p className="text-sm font-medium text-ink">Cover Photo</p>
               </div>
               <div className="relative aspect-video rounded-lg overflow-hidden border">
-                <img
-                  src={trip.cover_photo_url}
-                  alt="Cover"
-                  className="w-full h-full object-cover"
-                />
+                <img src={trip.cover_photo_url} alt="Cover" className="w-full h-full object-cover" />
               </div>
+            </div>
+          )}
+
+          {/* Danger Zone */}
+          {isOwner && (
+            <div className="border border-destructive/30 rounded-lg p-6">
+              <h3 className="font-georgia text-lg font-bold text-destructive mb-2">Danger Zone</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Permanently delete this trip and all its data. This cannot be undone.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2" disabled={deleting}>
+                    <Trash size={18} />
+                    {deleting ? 'Deleting...' : 'Delete Trip'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete "{trip.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete this trip and all associated data including itinerary, lodging, photos, and chat messages. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteTrip} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete Forever
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </div>

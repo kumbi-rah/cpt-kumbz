@@ -33,7 +33,6 @@ export default function TripDetail() {
 
     setLoading(true);
     try {
-      // Load trip
       const { data: tripData, error: tripError } = await supabase
         .from("trips")
         .select("*")
@@ -44,7 +43,6 @@ export default function TripDetail() {
       setTrip(tripData);
       setIsOwner(tripData.created_by === user?.id);
 
-      // Check if crew trip
       const { data: crewData } = await supabase
         .from("trip_crew")
         .select("id")
@@ -99,15 +97,15 @@ export default function TripDetail() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(42,34,24,0.3) 0%, rgba(42,34,24,0.88) 100%)",
+              "linear-gradient(to bottom, rgba(42,34,24,0.3) 0%, rgba(42,34,24,0.95) 100%)",
           }}
         />
         <div className="absolute bottom-6 left-5 right-5">
-          <h1 className="font-georgia text-[26px] md:text-[38px] font-bold text-parchment drop-shadow-lg">
+          <h1 className="font-georgia text-[26px] md:text-[38px] font-bold text-parchment drop-shadow-lg text-shadow-cover">
             {trip.name}
           </h1>
           {trip.destination && (
-            <p className="text-parchment/90 text-base md:text-lg drop-shadow-md mt-1">
+            <p className="text-parchment/90 text-base md:text-lg drop-shadow-md mt-1 text-shadow-cover">
               {formatDestination(trip.destination)}
             </p>
           )}
