@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Backpack, Pencil } from "@phosphor-icons/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Props {
   tripId: string;
@@ -13,7 +19,7 @@ interface Props {
 export default function TripPacking({ tripId, isOwner }: Props) {
   const [packingList, setPackingList] = useState("");
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [draftList, setDraftList] = useState("");
 
   useEffect(() => {
@@ -39,14 +45,9 @@ export default function TripPacking({ tripId, isOwner }: Props) {
     }
   };
 
-  const startEdit = () => {
+  const openEditDialog = () => {
     setDraftList(packingList);
-    setEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setEditing(false);
-    setDraftList("");
+    setDialogOpen(true);
   };
 
   const savePackingList = async () => {
@@ -59,7 +60,7 @@ export default function TripPacking({ tripId, isOwner }: Props) {
       if (error) throw error;
 
       setPackingList(draftList);
-      setEditing(false);
+      setDialogOpen(false);
       toast.success('Packing list saved!');
     } catch (error) {
       console.error('Error saving packing list:', error);
@@ -79,18 +80,44 @@ export default function TripPacking({ tripId, isOwner }: Props) {
     <div className="max-w-3xl mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-georgia text-2xl font-bold text-ink">Packing List</h2>
-        {isOwner && !editing && (
-          <Button onClick={startEdit} variant="outline" className="gap-2">
+        {isOwner && (
+          <Button onClick={openEditDialog} variant="outline" className="gap-2">
             <Pencil size={18} />
-            Edit
+            {packingList ? 'Edit' : 'Create'}
           </Button>
         )}
       </div>
 
-      {editing ? (
-        // Edit Mode
-        <div className="space-y-4">
-          <div>
+      {packingList ? (
+        <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+          <pre className="whitespace-pre-wrap font-sans text-sm text-ink">
+            {packingList}
+          </pre>
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="w-20 h-20 rounded-full bg-amber/10 flex items-center justify-center mx-auto mb-4">
+            <Backpack size={32} weight="duotone" className="text-amber" />
+          </div>
+          <p className="font-georgia text-lg text-muted-foreground mb-4">
+            No packing list yet
+          </p>
+          {isOwner && (
+            <Button onClick={openEditDialog} className="gap-2 bg-amber hover:bg-amber/90">
+              <Pencil size={18} />
+              Create Packing List
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Edit Packing List Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md w-[95vw] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-georgia">Edit Packing List</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
             <Textarea
               value={draftList}
               onChange={(e) => setDraftList(e.target.value)}
@@ -105,56 +132,24 @@ Clothing:
 Toiletries:
 - Toothbrush
 - Sunscreen
-- Shampoo
-
-Electronics:
-- Phone charger
-- Camera
-- Power adapter`}
-              rows={20}
+- Shampoo`}
+              rows={14}
               className="font-mono text-sm"
             />
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground">
               Tip: Use bullet points (-) and headers for better organization
             </p>
-          </div>
-
-          <div className="flex gap-2">
-            <Button onClick={savePackingList} className="gap-2 bg-amber hover:bg-amber/90">
-              Save Changes
-            </Button>
-            <Button onClick={cancelEdit} variant="outline">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
-        // View Mode
-        <div>
-          {packingList ? (
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-ink">
-                {packingList}
-              </pre>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={savePackingList} className="gap-2 bg-amber hover:bg-amber/90 flex-1">
+                Save Changes
+              </Button>
+              <Button onClick={() => setDialogOpen(false)} variant="outline">
+                Cancel
+              </Button>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 rounded-full bg-amber/10 flex items-center justify-center mx-auto mb-4">
-                <Backpack size={32} weight="duotone" className="text-amber" />
-              </div>
-              <p className="font-georgia text-lg text-muted-foreground mb-4">
-                No packing list yet
-              </p>
-              {isOwner && (
-                <Button onClick={startEdit} className="gap-2 bg-amber hover:bg-amber/90">
-                  <Pencil size={18} />
-                  Create Packing List
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

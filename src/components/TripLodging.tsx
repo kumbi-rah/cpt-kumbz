@@ -6,6 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Trash, Pencil, MapPin, Link as LinkIcon } from "@phosphor-icons/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Lodging {
   id: string;
@@ -28,6 +34,7 @@ interface Props {
 export default function TripLodging({ tripId, isOwner }: Props) {
   const [lodgings, setLodgings] = useState<Lodging[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [formData, setFormData] = useState({
@@ -73,13 +80,14 @@ export default function TripLodging({ tripId, isOwner }: Props) {
     });
   };
 
-  const startAdd = () => {
+  const openAddDialog = () => {
     resetForm();
     setAdding(true);
     setEditing(null);
+    setDialogOpen(true);
   };
 
-  const startEdit = (lodging: Lodging) => {
+  const openEditDialog = (lodging: Lodging) => {
     setFormData({
       name: lodging.name,
       address: lodging.address || "",
@@ -90,9 +98,11 @@ export default function TripLodging({ tripId, isOwner }: Props) {
     });
     setEditing(lodging.id);
     setAdding(false);
+    setDialogOpen(true);
   };
 
-  const cancelEdit = () => {
+  const closeDialog = () => {
+    setDialogOpen(false);
     setEditing(null);
     setAdding(false);
     resetForm();
@@ -106,7 +116,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
 
     try {
       if (adding) {
-        // Add new
         const maxOrder = Math.max(0, ...lodgings.map(l => l.display_order));
         const { error } = await supabase
           .from('trip_lodging')
@@ -124,7 +133,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
         if (error) throw error;
         toast.success('Lodging added!');
       } else if (editing) {
-        // Update existing
         const { error } = await supabase
           .from('trip_lodging')
           .update({
@@ -141,7 +149,7 @@ export default function TripLodging({ tripId, isOwner }: Props) {
         toast.success('Lodging updated!');
       }
 
-      cancelEdit();
+      closeDialog();
       loadLodgings();
     } catch (error) {
       console.error('Error saving lodging:', error);
@@ -179,15 +187,15 @@ export default function TripLodging({ tripId, isOwner }: Props) {
     <div className="max-w-3xl mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-georgia text-2xl font-bold text-ink">Accommodations</h2>
-        {isOwner && !adding && !editing && (
-          <Button onClick={startAdd} className="gap-2 bg-amber hover:bg-amber/90">
+        {isOwner && (
+          <Button onClick={openAddDialog} className="gap-2 bg-amber hover:bg-amber/90">
             <Plus size={18} weight="bold" />
             Add Lodging
           </Button>
         )}
       </div>
 
-      {lodgings.length === 0 && !adding && (
+      {lodgings.length === 0 && (
         <div className="text-center py-12">
           <div className="w-20 h-20 rounded-full bg-amber/10 flex items-center justify-center mx-auto mb-4">
             <MapPin size={32} weight="duotone" className="text-amber" />
@@ -196,7 +204,7 @@ export default function TripLodging({ tripId, isOwner }: Props) {
             No lodgings added yet
           </p>
           {isOwner && (
-            <Button onClick={startAdd} className="gap-2 bg-amber hover:bg-amber/90">
+            <Button onClick={openAddDialog} className="gap-2 bg-amber hover:bg-amber/90">
               <Plus size={18} weight="bold" />
               Add First Lodging
             </Button>
@@ -205,151 +213,76 @@ export default function TripLodging({ tripId, isOwner }: Props) {
       )}
 
       <div className="space-y-4">
-        {/* Existing Lodgings */}
         {lodgings.map((lodging) => (
-          <div key={lodging.id}>
-            {editing === lodging.id ? (
-              // Edit Form
-              <div className="bg-card border-2 border-amber/40 rounded-lg p-6 space-y-4">
-                <div>
-                  <Label>Name *</Label>
-                  <Input
-                    placeholder="e.g., Downtown Airbnb"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+          <div key={lodging.id} className="bg-card border border-border rounded-lg p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin size={20} weight="duotone" className="text-amber" />
+                  <h3 className="font-georgia text-xl font-bold text-ink">{lodging.name}</h3>
                 </div>
-
-                <div>
-                  <Label>Address</Label>
-                  <Input
-                    placeholder="e.g., 123 Main St, Medellín, Colombia"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Check-in Time</Label>
-                    <Input
-                      type="time"
-                      value={formData.check_in_time}
-                      onChange={(e) => setFormData({ ...formData, check_in_time: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Check-out Time</Label>
-                    <Input
-                      type="time"
-                      value={formData.check_out_time}
-                      onChange={(e) => setFormData({ ...formData, check_out_time: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Listing Link</Label>
-                  <Input
-                    type="url"
-                    placeholder="https://airbnb.com/..."
-                    value={formData.listing_link}
-                    onChange={(e) => setFormData({ ...formData, listing_link: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label>Notes</Label>
-                  <Textarea
-                    placeholder="WiFi password, door code, parking info, etc."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button onClick={saveLodging} className="gap-2 bg-amber hover:bg-amber/90">
-                    Save Changes
-                  </Button>
-                  <Button onClick={cancelEdit} variant="outline">
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              // View Card
-              <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPin size={20} weight="duotone" className="text-amber" />
-                      <h3 className="font-georgia text-xl font-bold text-ink">{lodging.name}</h3>
+                {lodging.address && (
+                  <p className="text-sm text-muted-foreground mb-3">{lodging.address}</p>
+                )}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {lodging.check_in_time && (
+                    <div className="text-sm">
+                      <span className="font-medium text-ink">Check-in:</span>{' '}
+                      <span className="text-muted-foreground">{lodging.check_in_time}</span>
                     </div>
-
-                    {lodging.address && (
-                      <p className="text-sm text-muted-foreground mb-3">{lodging.address}</p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      {lodging.check_in_time && (
-                        <div className="text-sm">
-                          <span className="font-medium text-ink">Check-in:</span>{' '}
-                          <span className="text-muted-foreground">{lodging.check_in_time}</span>
-                        </div>
-                      )}
-                      {lodging.check_out_time && (
-                        <div className="text-sm">
-                          <span className="font-medium text-ink">Check-out:</span>{' '}
-                          <span className="text-muted-foreground">{lodging.check_out_time}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {lodging.listing_link && (
-                      <a
-                        href={lodging.listing_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-amber hover:text-amber/80 flex items-center gap-1 mb-3"
-                      >
-                        <LinkIcon size={16} />
-                        View Listing
-                      </a>
-                    )}
-
-                    {lodging.notes && (
-                      <div className="mt-3 p-3 bg-amber/5 border border-amber/20 rounded">
-                        <p className="text-sm whitespace-pre-wrap">{lodging.notes}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {isOwner && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEdit(lodging)}
-                        className="text-muted-foreground hover:text-amber transition-colors"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => deleteLodging(lodging.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        <Trash size={18} />
-                      </button>
+                  )}
+                  {lodging.check_out_time && (
+                    <div className="text-sm">
+                      <span className="font-medium text-ink">Check-out:</span>{' '}
+                      <span className="text-muted-foreground">{lodging.check_out_time}</span>
                     </div>
                   )}
                 </div>
+                {lodging.listing_link && (
+                  <a
+                    href={lodging.listing_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-amber hover:text-amber/80 flex items-center gap-1 mb-3"
+                  >
+                    <LinkIcon size={16} />
+                    View Listing
+                  </a>
+                )}
+                {lodging.notes && (
+                  <div className="mt-3 p-3 bg-amber/5 border border-amber/20 rounded">
+                    <p className="text-sm whitespace-pre-wrap">{lodging.notes}</p>
+                  </div>
+                )}
               </div>
-            )}
+              {isOwner && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEditDialog(lodging)}
+                    className="text-muted-foreground hover:text-amber transition-colors"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => deleteLodging(lodging.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash size={18} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
+      </div>
 
-        {/* Add New Form */}
-        {adding && (
-          <div className="bg-card border-2 border-dashed border-amber/40 rounded-lg p-6 space-y-4">
+      {/* Add/Edit Lodging Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); else setDialogOpen(true); }}>
+        <DialogContent className="max-w-md w-[95vw] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-georgia">{editing ? 'Edit Lodging' : 'Add Lodging'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
             <div>
               <Label>Name *</Label>
               <Input
@@ -358,7 +291,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
-
             <div>
               <Label>Address</Label>
               <Input
@@ -367,7 +299,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Check-in Time</Label>
@@ -386,7 +317,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
                 />
               </div>
             </div>
-
             <div>
               <Label>Listing Link</Label>
               <Input
@@ -396,7 +326,6 @@ export default function TripLodging({ tripId, isOwner }: Props) {
                 onChange={(e) => setFormData({ ...formData, listing_link: e.target.value })}
               />
             </div>
-
             <div>
               <Label>Notes</Label>
               <Textarea
@@ -406,19 +335,17 @@ export default function TripLodging({ tripId, isOwner }: Props) {
                 rows={3}
               />
             </div>
-
-            <div className="flex gap-2">
-              <Button onClick={saveLodging} className="gap-2 bg-amber hover:bg-amber/90">
-                <Plus size={16} weight="bold" />
-                Add Lodging
+            <div className="flex gap-2 pt-2">
+              <Button onClick={saveLodging} className="gap-2 bg-amber hover:bg-amber/90 flex-1">
+                {editing ? 'Save Changes' : 'Add Lodging'}
               </Button>
-              <Button onClick={cancelEdit} variant="outline">
+              <Button onClick={closeDialog} variant="outline">
                 Cancel
               </Button>
             </div>
           </div>
-        )}
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
