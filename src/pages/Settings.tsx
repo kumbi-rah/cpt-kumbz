@@ -197,19 +197,6 @@ export default function Settings() {
         </div>
 
         <div className="space-y-8">
-          {/* Account Section */}
-          <div className="bg-card rounded-xl border p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-amber/20 flex items-center justify-center text-amber font-georgia font-bold text-lg">
-                {user?.email?.[0]?.toUpperCase() ?? "?"}
-              </div>
-              <div>
-                <h2 className="font-georgia text-xl font-bold text-ink">Account</h2>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-              </div>
-            </div>
-          </div>
-
           {/* Home Location Section */}
           <div className="bg-card rounded-xl border p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
