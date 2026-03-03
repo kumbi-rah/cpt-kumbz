@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { MapPin, Moon, Sun, FloppyDisk, SignOut } from "@phosphor-icons/react";
+import { MapPin, Moon, Sun, FloppyDisk, SignOut, User, PencilSimple } from "@phosphor-icons/react";
 
 interface GeoResult {
   display_name: string;
@@ -22,6 +22,8 @@ export default function Settings() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   // Autocomplete state
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
@@ -60,23 +62,26 @@ export default function Settings() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("user_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      const [settingsRes, profileRes] = await Promise.all([
+        supabase.from("user_settings").select("*").eq("user_id", user.id).single(),
+        supabase.from("user_profiles").select("*").eq("user_id", user.id).single(),
+      ]);
 
-      if (error && error.code !== "PGRST116") {
-        console.error("Error loading settings:", error);
+      if (settingsRes.error && settingsRes.error.code !== "PGRST116") {
+        console.error("Error loading settings:", settingsRes.error);
       }
-
-      if (data) {
-        setHomeCity(data.home_city || "");
-        setHomeLat(data.home_lat?.toString() || "");
-        setHomeLng(data.home_lng?.toString() || "");
-        const t = (data.theme as "light" | "dark") || "light";
+      if (settingsRes.data) {
+        setHomeCity(settingsRes.data.home_city || "");
+        setHomeLat(settingsRes.data.home_lat?.toString() || "");
+        setHomeLng(settingsRes.data.home_lng?.toString() || "");
+        const t = (settingsRes.data.theme as "light" | "dark") || "light";
         setTheme(t);
         applyTheme(t);
+      }
+
+      if (profileRes.data) {
+        setDisplayName(profileRes.data.display_name || "");
+        setAvatarUrl(profileRes.data.avatar_url || "");
       }
     } catch (err) {
       console.error("Failed to load settings:", err);
@@ -108,11 +113,18 @@ export default function Settings() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("user_settings")
-        .upsert(settings, { onConflict: "user_id" });
+      const [settingsRes, profileRes] = await Promise.all([
+        supabase.from("user_settings").upsert(settings, { onConflict: "user_id" }),
+        displayName.trim()
+          ? supabase.from("user_profiles").upsert(
+              { user_id: user.id, display_name: displayName.trim(), updated_at: new Date().toISOString() },
+              { onConflict: "user_id" }
+            )
+          : Promise.resolve({ error: null }),
+      ]);
 
-      if (error) throw error;
+      if (settingsRes.error) throw settingsRes.error;
+      if (profileRes.error) throw profileRes.error;
 
       toast.success("⚓ Settings saved!");
     } catch (err) {
@@ -197,6 +209,45 @@ export default function Settings() {
         </div>
 
         <div className="space-y-8">
+          {/* Profile Section */}
+          <div className="bg-card rounded-xl border p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <User size={24} weight="duotone" className="text-amber" />
+              <h2 className="font-georgia text-xl font-bold text-ink">My Profile</h2>
+            </div>
+
+            <div className="flex items-start gap-5">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-amber/20 shrink-0" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-amber/10 border-2 border-amber/20 flex items-center justify-center shrink-0">
+                  <User size={28} weight="duotone" className="text-amber" />
+                </div>
+              )}
+              <div className="flex-1 space-y-4">
+                <div>
+                  <Label htmlFor="displayName" className="text-sm font-medium text-ink mb-2 block">
+                    Display Name
+                  </Label>
+                  <Input
+                    id="displayName"
+                    placeholder="e.g., Captain Kumbi"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    This is how you appear in chat and to crew members
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-ink mb-2 block">Email</Label>
+                  <Input value={user?.email || ""} disabled className="bg-muted" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Home Location Section */}
           <div className="bg-card rounded-xl border p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
