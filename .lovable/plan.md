@@ -1,86 +1,70 @@
 
 
-# Combined Plan: All Pending Changes
+## Plan
 
-This plan consolidates every outstanding request into a single implementation pass.
+### 1. Improve Trip Title Readability
 
----
+**Problem**: The trip title/destination text over cover photos is hard to read, as shown in the uploaded screenshot (e.g., "Colombia 2026" blending into a dark background).
 
-## 1. Supabase Database: Crew Visibility + Photo Access (Migration)
+**Solution**: Add a semi-transparent dark card/backdrop behind the text in both places where trip titles overlay cover images:
 
-Add RLS policies so crew members can actually see and interact with trips they've been added to.
+- **`src/pages/TripDetail.tsx`** (lines 103-112): Wrap the title + destination text block in a rounded container with a dark semi-transparent background (`bg-black/50 backdrop-blur-sm`) and padding. This creates a frosted-glass card effect that ensures legibility regardless of the cover photo.
 
-**New policies to create via migration:**
+- **`src/components/HeroCard.tsx`** (lines 86-105): Apply the same frosted-glass card treatment to the bottom text content area (trip name, destination, countdown badge).
 
-- **trips table** -- crew SELECT: Allow crew members to view trips where they exist in `trip_crew`
-- **trip_photos table** -- crew SELECT, INSERT, DELETE: Allow crew to view all trip photos, upload their own, and delete their own
-- **arrivals table** -- crew SELECT: Allow crew members to view arrivals for trips they belong to
-- **trip_sections table** -- crew SELECT: Allow crew members to view trip sections
+The card style will use: `bg-black/45 backdrop-blur-sm rounded-xl px-4 py-3` -- subtle enough to feel integrated with the pirate/vintage theme but providing strong contrast for text.
 
-**Storage bucket** -- Add policies on `storage.objects` for the `trip-photos` bucket so crew members can upload and read files.
+### 2. Add Admin "Manage Users" Page
 
----
+**Problem**: No way for the admin to view all registered users, their profiles, and invite status.
 
-## 2. Cover Photo Text Readability
+**Solution**: Create a new "Users" page accessible from the side nav (admin only) that queries `user_profiles` and `auth.users` metadata via a Supabase edge function.
 
-Make trip titles always readable regardless of background image.
+#### Database Changes
+- Create a `user_roles` table following the security guidelines (enum `app_role` with values `admin`, `moderator`, `user`), a `has_role()` security definer function, and seed the current user as admin.
 
-**File: `src/index.css`**
-- Add a `.text-shadow-cover` utility class with multi-layer shadows
+#### Edge Function
+- **`supabase/functions/admin-users/index.ts`**: A secure edge function that:
+  - Verifies the caller has the `admin` role via `has_role()`
+  - Queries `auth.admin.listUsers()` using the service role key to get all users with their email, created_at, last_sign_in_at, and confirmation status
+  - Joins with `user_profiles` for display names and avatars
+  - Returns a combined user list
 
-**File: `src/pages/TripDetail.tsx`**
-- Add `text-shadow-cover` class to the `h1` trip name and destination `p` tag
-- Strengthen the gradient overlay to go darker at the bottom (increase from 0.88 to 0.95)
-
-**File: `src/components/HeroCard.tsx`**
-- Add `text-shadow-cover` class to the trip name `h2` and destination `p` tag
-
----
-
-## 3. Delete Trip Feature
-
-**File: `src/components/TripDetails.tsx`**
-- Add a "Danger Zone" section at the bottom (owner-only) with a red "Delete Trip" button
-- Use `AlertDialog` for confirmation before deletion
-- On confirm: delete related records from `arrivals`, `trip_sections`, `itinerary_items`, `trip_lodging`, `trip_messages`, `message_reactions`, `trip_crew`, and `trip_photos`, then delete the trip itself
-- Navigate to `/trips` after successful deletion
-- New imports: `AlertDialog` components, `useNavigate`, `Trash` icon
+#### Frontend Changes
+- **`src/pages/AdminUsers.tsx`**: New page with a table showing each user's display name, email, sign-up date, last sign-in, and confirmation/invite status. Uses the admin edge function to fetch data.
+- **`src/components/SideNav.tsx`**: Add a "Users" nav item (with a `UsersThree` icon) that only appears when the current user has the `admin` role. This requires a small hook or query to check the user's role.
+- **`src/components/BottomNav.tsx`**: Similarly add the Users link for mobile if admin.
+- **`src/App.tsx`**: Add a protected route for `/admin/users`.
 
 ---
 
-## 4. Mobile-Friendly Popup Dialogs for Editing
+### Technical Details
 
-Replace cramped inline forms with full-width popup dialogs.
+**Title card CSS approach:**
+```
+bg-black/45 backdrop-blur-sm rounded-xl px-4 py-3 inline-block
+```
+Applied as a wrapper `<div>` around the text content, positioned at the bottom-left of the cover area.
 
-### File: `src/components/TripItinerary.tsx`
-- Replace inline add-activity form (the dashed border card in the timeline) with a `Dialog`
-- "Add Activity" and "Add Day" buttons open the dialog instead of showing inline inputs
-- Dialog contains: Time input, Activity name, Notes textarea, Save/Cancel
-- Uses `max-w-md w-[95vw] max-h-[85vh] overflow-y-auto` for mobile comfort
+**User roles table (migration SQL):**
+```sql
+CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+CREATE TABLE public.user_roles (...);
+-- RLS + has_role() security definer function
+-- Seed current user as admin
+```
 
-### File: `src/components/TripLodging.tsx`
-- Replace both the inline "add" and "edit" form blocks with a single `Dialog`
-- "Add Lodging" / edit pencil icon opens the dialog
-- Dialog contains all fields: Name, Address, Check-in/out times, Listing Link, Notes
-- Same responsive sizing as above
+**Edge function** uses `supabase.auth.admin.listUsers()` (requires `SUPABASE_SERVICE_ROLE_KEY`) and cross-references `user_profiles` for display data. Only callable by users with the `admin` role.
 
-### File: `src/components/TripPacking.tsx`
-- Replace the inline textarea editing mode with a `Dialog`
-- "Edit" / "Create Packing List" opens the dialog with the full-height textarea
-- Save/Cancel buttons in the dialog footer
+**Files to create:**
+- `supabase/functions/admin-users/index.ts`
+- `src/pages/AdminUsers.tsx`
 
----
-
-## Summary of All Changes
-
-| Resource | Change |
-|---|---|
-| Supabase migration | RLS policies for crew on `trips`, `trip_photos`, `arrivals`, `trip_sections`, `storage.objects` |
-| `src/index.css` | Add `.text-shadow-cover` CSS utility |
-| `src/pages/TripDetail.tsx` | Apply text shadow + stronger gradient on cover |
-| `src/components/HeroCard.tsx` | Apply text shadow to title/destination |
-| `src/components/TripDetails.tsx` | Add Delete Trip with AlertDialog confirmation |
-| `src/components/TripItinerary.tsx` | Move add-activity form into Dialog |
-| `src/components/TripLodging.tsx` | Move add/edit lodging form into Dialog |
-| `src/components/TripPacking.tsx` | Move edit packing list into Dialog |
+**Files to modify:**
+- `src/pages/TripDetail.tsx` -- add backdrop card around title
+- `src/components/HeroCard.tsx` -- add backdrop card around title
+- `src/components/SideNav.tsx` -- add admin-only Users nav item
+- `src/components/BottomNav.tsx` -- add admin-only Users nav item
+- `src/App.tsx` -- add /admin/users route
+- New migration for `user_roles` table + `has_role()` function
 
