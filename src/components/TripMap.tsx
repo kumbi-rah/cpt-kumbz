@@ -4,6 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { Trip } from "@/hooks/useTrips";
 import { format } from "date-fns";
 import { formatDestination } from "@/lib/formatDestination";
+import { escapeHtml } from "@/lib/escapeHtml";
 import CompassRose from "@/components/icons/CompassRose";
 import { Button } from "@/components/ui/button";
 
@@ -45,8 +46,8 @@ export default function TripMap({ trip, onEditTrip }: Props) {
     // Popup
     const popupHtml = `
       <div style="font-family:'Playfair Display',Georgia,serif;background:#FAF7F2;padding:10px 14px;border-radius:6px;min-width:160px;">
-        <p style="font-weight:700;font-size:14px;color:#2A2218;margin:0;">${trip.name}</p>
-        ${trip.destination ? `<p style="font-size:12px;color:#5A4F3E;margin:3px 0 0;">${formatDestination(trip.destination)}</p>` : ""}
+        <p style="font-weight:700;font-size:14px;color:#2A2218;margin:0;">${escapeHtml(trip.name)}</p>
+        ${trip.destination ? `<p style="font-size:12px;color:#5A4F3E;margin:3px 0 0;">${escapeHtml(formatDestination(trip.destination))}</p>` : ""}
         ${trip.start_date ? `<p style="font-size:11px;color:#9A8F7E;margin:3px 0 0;">${format(new Date(trip.start_date), "MMM d")}${trip.end_date ? ` – ${format(new Date(trip.end_date), "MMM d, yyyy")}` : ""}</p>` : ""}
       </div>
     `;
