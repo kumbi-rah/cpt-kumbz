@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import GlobeScene from "@/components/GlobeScene";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrips } from "@/hooks/useTrips";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +10,8 @@ import { useCountUp } from "@/lib/useCountUp";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import RopeDivider from "@/components/icons/RopeDivider";
+
+const VoyageMap = lazy(() => import("@/components/VoyageMap"));
 
 export default function GlobePage() {
   const { data: trips = [], isLoading } = useTrips();
@@ -106,20 +107,20 @@ export default function GlobePage() {
           </div>
         </div>
 
-        {/* Globe container */}
-        <div className="h-[210px] sm:h-[240px] md:h-[500px] lg:h-[700px] relative w-full px-5">
+        {/* Map container */}
+        <div className="h-[280px] sm:h-[340px] md:h-[500px] lg:h-[600px] relative w-full px-5">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <Skeleton className="w-80 h-80 rounded-full" />
+              <Skeleton className="w-full h-full rounded-xl" />
             </div>
           ) : (
-            <div className="w-full h-full max-w-[320px] sm:max-w-[420px] md:max-w-none mx-auto">
-              <GlobeScene
+            <Suspense fallback={<Skeleton className="w-full h-full rounded-xl" />}>
+              <VoyageMap
                 trips={filteredTrips}
                 onTripClick={(id) => navigate(`/trip/${id}`)}
                 homeLocation={homeLocation}
               />
-            </div>
+            </Suspense>
           )}
         </div>
 
