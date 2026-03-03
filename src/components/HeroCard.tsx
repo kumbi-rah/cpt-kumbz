@@ -84,24 +84,25 @@ export default function HeroCard({ trip, onCreateClick }: Props) {
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 z-10">
-        <p className="font-cinzel text-[10px] uppercase tracking-[3px] text-primary mb-2 md:text-2xl">
-          Next Adventure
-        </p>
-        <h2 className="font-georgia font-bold text-[26px] leading-tight md:text-6xl text-shadow-cover" style={{ color: "#F2EDE4" }}>
-          {trip.name}
-        </h2>
-        {trip.destination &&
-        <p className="text-[15px] mt-2 md:text-2xl text-shadow-cover" style={{ color: "hsl(36 13% 60%)" }}>
-            {formatDestination(trip.destination)}
+        <div className="inline-block bg-black/45 backdrop-blur-sm rounded-xl px-4 py-3">
+          <p className="font-cinzel text-[10px] uppercase tracking-[3px] text-primary mb-2 md:text-2xl">
+            Next Adventure
           </p>
-        }
-        {countdownText &&
-        <span
-          className={`inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}>
-
-            {countdownText}
-          </span>
-        }
+          <h2 className="font-georgia font-bold text-[26px] leading-tight md:text-6xl text-shadow-cover" style={{ color: "#F2EDE4" }}>
+            {trip.name}
+          </h2>
+          {trip.destination &&
+          <p className="text-[15px] mt-2 md:text-2xl text-shadow-cover" style={{ color: "hsl(36 13% 60%)" }}>
+              {formatDestination(trip.destination)}
+            </p>
+          }
+          {countdownText &&
+          <span
+            className={`inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground ${isActive ? "animate-pulse-glow" : ""}`}>
+              {countdownText}
+            </span>
+          }
+        </div>
       </div>
 
       {/* View Trip button */}

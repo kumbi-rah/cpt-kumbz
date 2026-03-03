@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { SignOut, Gear } from "@phosphor-icons/react";
+import { SignOut, Gear, UsersThree } from "@phosphor-icons/react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import CompassRose from "@/components/icons/CompassRose";
 import TreasureMapScroll from "@/components/icons/TreasureMapScroll";
 import ShipsWheel from "@/components/icons/ShipsWheel";
@@ -14,6 +15,7 @@ export default function SideNav({ onCreateClick }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const path = location.pathname;
 
   const navItems = [
@@ -21,6 +23,7 @@ export default function SideNav({ onCreateClick }: Props) {
     { label: "Trips", icon: TreasureMapScroll, route: "/trips", match: (p: string) => p === "/trips" },
     { label: "Globe", icon: ShipsWheel, route: "/globe", match: (p: string) => p === "/globe" },
     { label: "Settings", icon: Gear, route: "/settings", match: (p: string) => p === "/settings" },
+    ...(isAdmin ? [{ label: "Users", icon: UsersThree, route: "/admin/users", match: (p: string) => p === "/admin/users" }] : []),
   ];
 
   return (
