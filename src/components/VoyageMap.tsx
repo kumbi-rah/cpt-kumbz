@@ -4,6 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { Trip } from "@/hooks/useTrips";
 import { getTripStatus } from "@/lib/tripStatus";
 import { formatDestination } from "@/lib/formatDestination";
+import { escapeHtml } from "@/lib/escapeHtml";
 
 interface Props {
   trips: Trip[];
@@ -94,7 +95,7 @@ export default function VoyageMap({ trips, onTripClick, homeLocation }: Props) {
         .setLngLat([homeLocation.lng, homeLocation.lat])
         .setPopup(
           new mapboxgl.Popup({ offset: 16, closeButton: false, className: "trip-map-popup" })
-            .setHTML(`<div style="font-family:'Playfair Display',Georgia,serif;padding:6px 10px;"><strong>Home</strong><br/><span style="font-size:12px;color:#5A4F3E;">${homeLocation.city}</span></div>`)
+            .setHTML(`<div style="font-family:'Playfair Display',Georgia,serif;padding:6px 10px;"><strong>Home</strong><br/><span style="font-size:12px;color:#5A4F3E;">${escapeHtml(homeLocation.city)}</span></div>`)
         )
         .addTo(map);
     }
@@ -116,8 +117,8 @@ export default function VoyageMap({ trips, onTripClick, homeLocation }: Props) {
       const popup = new mapboxgl.Popup({ offset: 14, closeButton: false, className: "trip-map-popup" })
         .setHTML(`
           <div style="font-family:'Playfair Display',Georgia,serif;padding:6px 10px;min-width:120px;">
-            <strong style="color:#2A2218;">${trip.name}</strong>
-            ${trip.destination ? `<br/><span style="font-size:12px;color:#5A4F3E;">${formatDestination(trip.destination)}</span>` : ""}
+            <strong style="color:#2A2218;">${escapeHtml(trip.name)}</strong>
+            ${trip.destination ? `<br/><span style="font-size:12px;color:#5A4F3E;">${escapeHtml(formatDestination(trip.destination))}</span>` : ""}
           </div>
         `);
 
