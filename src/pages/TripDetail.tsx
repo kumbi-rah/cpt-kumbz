@@ -11,7 +11,8 @@ import TripLodging from "@/components/TripLodging";
 import TripPacking from "@/components/TripPacking";
 import TripCrew from "@/components/TripCrew";
 import TripChat from "@/components/TripChat";
-import { FileText, MapTrifold, House, Backpack, Users, ChatCircle } from "@phosphor-icons/react";
+import { FileText, MapTrifold, House, Backpack, Users, ChatCircle, Camera } from "@phosphor-icons/react";
+import PhotoGallery from "@/components/PhotoGallery";
 
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
@@ -118,47 +119,54 @@ export default function TripDetail() {
         <div className="bg-card rounded-2xl shadow-lg border p-5 md:p-6">
           {/* Tabs */}
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-6">
+            <TabsList className="flex flex-wrap gap-1.5 h-auto p-1.5 mb-6">
               <TabsTrigger
                 value="details"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <FileText size={16} weight="duotone" className="hidden md:block" />
+                <FileText size={16} weight="duotone" className="hidden sm:block" />
                 Details
               </TabsTrigger>
               <TabsTrigger
                 value="itinerary"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <MapTrifold size={16} weight="duotone" className="hidden md:block" />
+                <MapTrifold size={16} weight="duotone" className="hidden sm:block" />
                 Itinerary
               </TabsTrigger>
               <TabsTrigger
                 value="lodging"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <House size={16} weight="duotone" className="hidden md:block" />
+                <House size={16} weight="duotone" className="hidden sm:block" />
                 Lodging
               </TabsTrigger>
               <TabsTrigger
                 value="packing"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <Backpack size={16} weight="duotone" className="hidden md:block" />
+                <Backpack size={16} weight="duotone" className="hidden sm:block" />
                 Packing
               </TabsTrigger>
               <TabsTrigger
-                value="crew"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                value="photos"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <Users size={16} weight="duotone" className="hidden md:block" />
+                <Camera size={16} weight="duotone" className="hidden sm:block" />
+                Photos
+              </TabsTrigger>
+              <TabsTrigger
+                value="crew"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
+              >
+                <Users size={16} weight="duotone" className="hidden sm:block" />
                 Crew
               </TabsTrigger>
               <TabsTrigger
                 value="chat"
-                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1 md:gap-2 text-xs md:text-sm"
+                className="data-[state=active]:bg-amber/10 data-[state=active]:font-semibold gap-1.5 text-sm px-3 py-2.5 flex-1 min-w-[80px]"
               >
-                <ChatCircle size={16} weight="duotone" className="hidden md:block" />
+                <ChatCircle size={16} weight="duotone" className="hidden sm:block" />
                 Chat
               </TabsTrigger>
             </TabsList>
@@ -182,6 +190,10 @@ export default function TripDetail() {
 
             <TabsContent value="packing">
               <TripPacking tripId={id!} isOwner={isOwner} />
+            </TabsContent>
+
+            <TabsContent value="photos">
+              <PhotoGallery tripId={id!} />
             </TabsContent>
 
             <TabsContent value="crew">
