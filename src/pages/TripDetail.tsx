@@ -101,14 +101,16 @@ export default function TripDetail() {
           }}
         />
         <div className="absolute bottom-6 left-5 right-5">
-          <h1 className="font-georgia text-[26px] md:text-[38px] font-bold text-parchment drop-shadow-lg text-shadow-cover">
-            {trip.name}
-          </h1>
-          {trip.destination && (
-            <p className="text-parchment/90 text-base md:text-lg drop-shadow-md mt-1 text-shadow-cover">
-              {formatDestination(trip.destination)}
-            </p>
-          )}
+          <div className="inline-block bg-black/50 backdrop-blur-sm rounded-xl px-4 py-3">
+            <h1 className="font-georgia text-[26px] md:text-[38px] font-bold text-parchment drop-shadow-lg text-shadow-cover">
+              {trip.name}
+            </h1>
+            {trip.destination && (
+              <p className="text-parchment/90 text-base md:text-lg drop-shadow-md mt-1 text-shadow-cover">
+                {formatDestination(trip.destination)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

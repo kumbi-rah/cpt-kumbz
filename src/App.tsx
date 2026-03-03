@@ -12,6 +12,7 @@ import CreateTripDialog from "@/components/CreateTripDialog";
 import Index from "./pages/Index";
 import Trips from "./pages/Trips";
 import TripDetail from "./pages/TripDetail";
+import AdminUsers from "./pages/AdminUsers";
 import GlobePage from "./pages/GlobePage";
 import Settings from "./pages/Settings";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -134,6 +135,14 @@ function AppLayout() {
             element={
               <ProtectedRoute>
                 <Index onCreateClick={() => setCreateOpen(true)} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsers />
               </ProtectedRoute>
             }
           />
