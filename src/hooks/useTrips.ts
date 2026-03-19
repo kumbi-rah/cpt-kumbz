@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { getSignedStorageUrl, getSignedStorageUrls } from "@/lib/storageUrl";
 
 export type Trip = Tables<"trips">;
 export type TripSection = Tables<"trip_sections">;
