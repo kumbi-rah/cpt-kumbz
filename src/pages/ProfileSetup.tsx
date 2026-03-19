@@ -76,12 +76,13 @@ export default function ProfileSetup() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data } = supabase.storage
+      // Get signed URL
+      const { data: signedData } = await supabase.storage
         .from("trip-photos")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 86400);
 
-      setAvatarUrl(data.publicUrl);
+      const signedUrl = signedData?.signedUrl || "";
+      setAvatarUrl(signedUrl);
       toast.success("📸 Avatar uploaded!");
     } catch (error) {
       console.error("Error uploading avatar:", error);

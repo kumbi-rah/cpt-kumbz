@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { getSignedStorageUrl, getSignedStorageUrls } from "@/lib/storageUrl";
 
 export type Trip = Tables<"trips">;
 export type TripSection = Tables<"trip_sections">;
@@ -121,7 +122,15 @@ export function useTripPhotos(tripId: string) {
         .eq("trip_id", tripId)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
-      return data as TripPhoto[];
+
+      // Generate signed URLs from storage_path
+      const paths = (data || []).map((p) => p.storage_path).filter(Boolean) as string[];
+      const signedMap = await getSignedStorageUrls(paths);
+
+      return (data || []).map((p) => ({
+        ...p,
+        public_url: (p.storage_path && signedMap.get(p.storage_path)) || p.public_url || "",
+      })) as TripPhoto[];
     },
     enabled: !!tripId,
   });
@@ -232,7 +241,6 @@ export function useUploadPhoto() {
       const path = `${tripId}/${Date.now()}_${file.name}`;
       const { error: uploadErr } = await supabase.storage.from("trip-photos").upload(path, file);
       if (uploadErr) throw uploadErr;
-      const { data: urlData } = supabase.storage.from("trip-photos").getPublicUrl(path);
 
       // Get image dimensions
       let width: number | null = null;
@@ -249,7 +257,7 @@ export function useUploadPhoto() {
       const { error: dbErr } = await supabase.from("trip_photos").insert({
         trip_id: tripId,
         storage_path: path,
-        public_url: urlData.publicUrl,
+        public_url: null,
         uploaded_by: userId,
         width,
         height,
@@ -257,10 +265,11 @@ export function useUploadPhoto() {
       });
       if (dbErr) throw dbErr;
 
-      // Auto-set as cover photo if trip doesn't have one
+      // Auto-set as cover photo if trip doesn't have one — store storage_path as cover
       const { data: trip } = await supabase.from("trips").select("cover_photo_url").eq("id", tripId).single();
       if (trip && !trip.cover_photo_url) {
-        await supabase.from("trips").update({ cover_photo_url: urlData.publicUrl }).eq("id", tripId);
+        const signedUrl = await getSignedStorageUrl(path);
+        await supabase.from("trips").update({ cover_photo_url: signedUrl }).eq("id", tripId);
       }
     },
     onSuccess: () => {

@@ -105,13 +105,15 @@ export default function TripDetails({ trip, isOwner, onUpdate }: Props) {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('trip-photos')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 86400);
+
+      const signedUrl = signedData?.signedUrl || "";
 
       const { error: updateError } = await supabase
         .from('trips')
-        .update({ cover_photo_url: data.publicUrl })
+        .update({ cover_photo_url: signedUrl })
         .eq('id', trip.id);
 
       if (updateError) throw updateError;
