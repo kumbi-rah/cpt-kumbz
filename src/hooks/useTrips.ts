@@ -122,7 +122,15 @@ export function useTripPhotos(tripId: string) {
         .eq("trip_id", tripId)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
-      return data as TripPhoto[];
+
+      // Generate signed URLs from storage_path
+      const paths = (data || []).map((p) => p.storage_path).filter(Boolean) as string[];
+      const signedMap = await getSignedStorageUrls(paths);
+
+      return (data || []).map((p) => ({
+        ...p,
+        public_url: (p.storage_path && signedMap.get(p.storage_path)) || p.public_url || "",
+      })) as TripPhoto[];
     },
     enabled: !!tripId,
   });
