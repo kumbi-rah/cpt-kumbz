@@ -73,21 +73,17 @@ export function useTripSections(tripId: string) {
   });
 }
 
-export function usePublicSections(tripId: string) {
+export function usePublicSections(shareToken: string) {
   return useQuery({
-    queryKey: ["public_sections", tripId],
+    queryKey: ["public_sections", shareToken],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trip_sections")
-        .select("*")
-        .eq("trip_id", tripId)
-        .eq("is_public", true)
-        .in("type", ["itinerary", "recommendations"])
-        .order("sort_order");
+      const { data, error } = await supabase.rpc("get_public_sections_by_share_token", {
+        _token: shareToken,
+      });
       if (error) throw error;
-      return data as TripSection[];
+      return (data || []) as TripSection[];
     },
-    enabled: !!tripId,
+    enabled: !!shareToken,
   });
 }
 
