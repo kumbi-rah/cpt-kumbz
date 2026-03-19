@@ -12,7 +12,7 @@ import { Anchor } from "@phosphor-icons/react";
 export default function PublicSharePage() {
   const { shareToken } = useParams<{ shareToken: string }>();
   const { data: trip, isLoading: tripLoading } = useTripByShareToken(shareToken!);
-  const { data: sections = [], isLoading: sectionsLoading } = usePublicSections(trip?.id || "");
+  const { data: sections = [], isLoading: sectionsLoading } = usePublicSections(shareToken!);
 
   if (tripLoading) {
     return (
