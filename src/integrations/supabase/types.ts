@@ -470,6 +470,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_sections_by_share_token: {
+        Args: { _token: string }
+        Returns: {
+          content: Json | null
+          id: string
+          is_public: boolean | null
+          sort_order: number | null
+          title: string | null
+          trip_id: string | null
+          type: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "trip_sections"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_trip_by_share_token: {
+        Args: { _token: string }
+        Returns: {
+          city: string | null
+          country: string | null
+          cover_photo_url: string | null
+          created_at: string | null
+          created_by: string | null
+          destination: string | null
+          end_date: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          packing_list: string | null
+          share_enabled: boolean | null
+          share_token: string
+          start_date: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "trips"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
