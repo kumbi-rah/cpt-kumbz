@@ -48,13 +48,12 @@ export function useTripByShareToken(token: string) {
   return useQuery({
     queryKey: ["trip_share", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trips")
-        .select("id, name, destination, city, country, lat, lng, start_date, end_date, cover_photo_url, share_token, share_enabled")
-        .eq("share_token", token)
-        .single();
+      const { data, error } = await supabase.rpc("get_trip_by_share_token", {
+        _token: token,
+      });
       if (error) throw error;
-      return data as Trip;
+      if (!data || (data as any[]).length === 0) return null;
+      return (data as any[])[0] as Trip;
     },
     enabled: !!token,
   });
