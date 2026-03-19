@@ -241,7 +241,6 @@ export function useUploadPhoto() {
       const path = `${tripId}/${Date.now()}_${file.name}`;
       const { error: uploadErr } = await supabase.storage.from("trip-photos").upload(path, file);
       if (uploadErr) throw uploadErr;
-      const { data: urlData } = supabase.storage.from("trip-photos").getPublicUrl(path);
 
       // Get image dimensions
       let width: number | null = null;
@@ -258,7 +257,7 @@ export function useUploadPhoto() {
       const { error: dbErr } = await supabase.from("trip_photos").insert({
         trip_id: tripId,
         storage_path: path,
-        public_url: urlData.publicUrl,
+        public_url: null,
         uploaded_by: userId,
         width,
         height,
@@ -266,10 +265,11 @@ export function useUploadPhoto() {
       });
       if (dbErr) throw dbErr;
 
-      // Auto-set as cover photo if trip doesn't have one
+      // Auto-set as cover photo if trip doesn't have one — store storage_path as cover
       const { data: trip } = await supabase.from("trips").select("cover_photo_url").eq("id", tripId).single();
       if (trip && !trip.cover_photo_url) {
-        await supabase.from("trips").update({ cover_photo_url: urlData.publicUrl }).eq("id", tripId);
+        const signedUrl = await getSignedStorageUrl(path);
+        await supabase.from("trips").update({ cover_photo_url: signedUrl }).eq("id", tripId);
       }
     },
     onSuccess: () => {

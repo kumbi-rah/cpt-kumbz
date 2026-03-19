@@ -170,7 +170,7 @@ export default function TripChat({ tripId }: Props) {
           trip_id: tripId,
           user_id: user!.id,
           message: '📸 Shared a photo',
-          photo_url: data.publicUrl,
+          photo_url: photoSignedUrl,
         });
 
       if (messageError) throw messageError;
