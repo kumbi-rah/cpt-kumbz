@@ -157,10 +157,11 @@ export default function TripChat({ tripId }: Props) {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data } = supabase.storage
+      // Get signed URL
+      const { data: signedData } = await supabase.storage
         .from('trip-photos')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 86400);
+      const photoSignedUrl = signedData?.signedUrl || "";
 
       // Send message with photo
       const { error: messageError } = await supabase
